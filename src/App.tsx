@@ -7,6 +7,7 @@ import { EditorArea } from './components/EditorArea'
 import { StatusBar } from './components/StatusBar'
 import { SearchEverywhere } from './components/SearchEverywhere'
 import { NewProjectWizard } from './components/NewProjectWizard'
+import { UsagesPopup } from './components/UsagesPopup'
 import { ContextMenu, Toasts } from './components/Overlays'
 import { SettingsDialog } from './components/Settings'
 import { Welcome } from './components/Welcome'
@@ -93,6 +94,7 @@ export default function App() {
       </div>
       <SearchEverywhere />
       <NewProjectWizard />
+      <UsagesPopup />
       <SettingsDialog />
       <ContextMenu />
       <Toasts />

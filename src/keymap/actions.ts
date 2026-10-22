@@ -6,8 +6,9 @@ import { formatDocument } from '@codemirror/lsp-client'
 import { useStore } from '../store/store'
 import { useSettings, FONT_SIZES } from '../store/settings'
 import { getView } from '../editor/views'
-import { goToDefinition, hasLanguageServer, references, rename, saveFile } from '../editor/actions'
-import { goBack, goForward, recordJump } from '../editor/navigation'
+import { hasLanguageServer, rename, saveFile } from '../editor/actions'
+import { goToDeclarationOrUsages, showUsagesOf } from '../editor/usages'
+import { goBack, goForward } from '../editor/navigation'
 import { openFind } from '../editor/findBar'
 import { pickFolder } from '../components/Welcome'
 
@@ -63,12 +64,12 @@ export const BUILT_IN_ACTIONS: Action[] = [
   { id: 'nav.forward', title: 'Forward', category: 'Navigation', run: () => void goForward() },
   {
     id: 'nav.definition',
-    title: 'Go to definition',
+    title: 'Go to declaration or usages',
     category: 'Navigation',
     editor: true,
-    run: onEditor((v) => (recordJump(), void goToDefinition(v), true))
+    run: onEditor((v) => (void goToDeclarationOrUsages(v), true))
   },
-  { id: 'nav.usages', title: 'Find usages', category: 'Navigation', editor: true, run: onEditor((v) => references(v) || false) },
+  { id: 'nav.usages', title: 'Find usages', category: 'Navigation', editor: true, run: onEditor((v) => (void showUsagesOf(v), true)) },
 
   // Editing
   { id: 'edit.save', title: 'Save', category: 'Editing', run: () => { const p = store().active; if (p) void saveFile(p) } },

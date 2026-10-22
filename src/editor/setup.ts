@@ -37,7 +37,8 @@ import { braceFlavor, scopeField, symbolsAt, symbolForActions } from './scopes'
 import { scopeRails } from './scopeRails'
 import { codeLens, lensPath } from './codeLens'
 import { allViews, isDirty } from './views'
-import { goToDefinition, hasLanguageServer, references, rename } from './actions'
+import { hasLanguageServer, rename } from './actions'
+import { goToDeclarationOrUsages, showUsagesOf } from './usages'
 import { lspCompartment } from '../lsp/servers'
 import { toSymbolInfo } from './symbolInfo'
 import { getSymbolActions, ide } from '../plugins/host'
@@ -96,10 +97,10 @@ function contextMenu(view: EditorView, path: string, event: MouseEvent) {
   }
   const lsp = hasLanguageServer(view)
   const items: MenuItem[] = [
-    { label: 'Go to definition', hint: shortcutLabel('nav.definition'), onSelect: () => goToDefinition(view) },
+    { label: 'Go to declaration or usages', hint: shortcutLabel('nav.definition'), onSelect: () => goToDeclarationOrUsages(view) },
+    { label: 'Find usages', hint: shortcutLabel('nav.usages'), onSelect: () => showUsagesOf(view) },
     ...(lsp
       ? [
-          { label: 'Find usages', hint: shortcutLabel('nav.usages'), onSelect: () => references(view) },
           { label: 'Rename symbol', hint: shortcutLabel('edit.rename'), onSelect: () => rename(view) }
         ]
       : [])
@@ -175,7 +176,7 @@ export function createEditor(path: string, text: string, parent: HTMLElement): E
         const pos = view.posAtCoords({ x: event.clientX, y: event.clientY })
         if (pos === null) return false
         view.dispatch({ selection: { anchor: pos } })
-        goToDefinition(view)
+        goToDeclarationOrUsages(view)
         event.preventDefault()
         return true
       },
