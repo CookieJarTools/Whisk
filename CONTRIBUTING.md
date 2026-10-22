@@ -24,6 +24,7 @@ npm run tauri dev -- -- -- <folder> [file…]
 | `src-tauri/src` | The Rust side: files (`fs.rs`), project search (`search.rs`), language server processes (`lsp.rs`), shell and paths (`system.rs`), updates (`updates.rs`) |
 | `src/editor` | CodeMirror setup, the block scanner (`scopes.ts`), scope rails, the find bar, the action row above methods |
 | `src/lsp` | Talking to language servers, and the list of known servers (`catalogue.ts`) |
+| `src/lint` | Whisk's lint rules (`rules.ts`), their config and the project `.whisk/lint.json`, and merging with language-server errors |
 | `src/keymap` | Actions, keymap presets and the shortcut handler |
 | `src/plugins` | The plugin API and host, and the Claude plugin |
 | `src/updates` | Checking for, downloading and installing updates |

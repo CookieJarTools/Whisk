@@ -28,6 +28,7 @@ import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap, s
 import { highlightSelectionMatches } from '@codemirror/search'
 import { closeReferencePanel } from '@codemirror/lsp-client'
 import { findBar } from './findBar'
+import { countProblems, diagnosticsChanged, lintExtension } from '../lint/extension'
 import { shortcutLabel } from '../keymap/keymap'
 import { languageFor, isMarkdown, type BraceFlavor } from '../lib/languages'
 import { useSettings, type Settings } from '../store/settings'
@@ -168,6 +169,7 @@ export function createEditor(path: string, text: string, parent: HTMLElement): E
     braceFlavor.of(lang.braces),
     scopeField,
     lensPath.of(path),
+    lintExtension,
     prefsCompartment.of(prefExtensions(useSettings.getState(), lang.braces, markdown)),
     editorTheme,
     EditorView.domEventHandlers({
@@ -196,6 +198,7 @@ export function createEditor(path: string, text: string, parent: HTMLElement): E
     }),
     EditorView.updateListener.of((update) => {
       const store = useStore.getState()
+      if (diagnosticsChanged(update)) store.setProblems(path, countProblems(update.view))
       if (update.docChanged) {
         store.setDirty(path, isDirty(path, update.state.doc))
         if (markdown) {

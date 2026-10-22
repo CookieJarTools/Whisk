@@ -1,4 +1,5 @@
-import { LSPClient, hoverTooltips, serverCompletion, serverDiagnostics, signatureHelp } from '@codemirror/lsp-client'
+import { LSPClient, hoverTooltips, serverCompletion, signatureHelp } from '@codemirror/lsp-client'
+import { mergedServerDiagnostics } from '../lint/diagnostics'
 import { Compartment } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { ipc } from '../lib/ipc'
@@ -61,7 +62,7 @@ async function start(def: ServerDef, root: string): Promise<Running | null> {
       timeout: 10_000,
       workspace: (c) => new IdeWorkspace(c),
       // No LSP keymaps: rename, definition, usages and format are keymap actions.
-      extensions: [serverCompletion(), hoverTooltips(), signatureHelp(), serverDiagnostics()],
+      extensions: [serverCompletion(), hoverTooltips(), signatureHelp(), mergedServerDiagnostics()],
       unhandledNotification: (_c, method, params) => {
         if (method === '$/progress' && params?.value?.kind !== 'end') {
           const v = params.value

@@ -4,16 +4,18 @@ import { FONT_SIZES, isCompact, useSettings } from '../store/settings'
 import { LanguageServers } from './LanguageServers'
 import { KeymapSettings } from './KeymapSettings'
 import { UpdatesSettings } from './UpdatesSettings'
+import { LinterSettings } from './LinterSettings'
 import { shortcutLabel } from '../keymap/keymap'
 import { getLoadedPlugins, ide, openPluginsFolder } from '../plugins/host'
 import { Icon } from './Icon'
 
-type Section = 'layout' | 'editor' | 'keymap' | 'claude' | 'languages' | 'plugins' | 'updates'
+type Section = 'layout' | 'editor' | 'keymap' | 'linter' | 'claude' | 'languages' | 'plugins' | 'updates'
 
 const SECTIONS: { id: Section; label: string }[] = [
   { id: 'layout', label: 'Layout' },
   { id: 'editor', label: 'Editor' },
   { id: 'keymap', label: 'Keymap' },
+  { id: 'linter', label: 'Linter' },
   { id: 'claude', label: 'Claude' },
   { id: 'languages', label: 'Language servers' },
   { id: 'plugins', label: 'Plugins' },
@@ -130,6 +132,7 @@ const BODIES: Record<Section, () => ReactNode> = {
   editor: Editor,
   claude: Claude,
   keymap: KeymapSettings,
+  linter: LinterSettings,
   languages: LanguageServers,
   plugins: Plugins,
   updates: UpdatesSettings

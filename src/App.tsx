@@ -15,6 +15,8 @@ import { loadPlugins } from './plugins/host'
 import { stopAllServers } from './lsp/servers'
 import claudePlugin from './plugins/claude'
 import { installKeymap } from './keymap/keymap'
+import { isProjectConfig, loadProjectLint } from './lint/project'
+import { onFileSaved } from './editor/actions'
 import { startUpdater } from './updates/updates'
 import { ipc } from './lib/ipc'
 
@@ -48,6 +50,7 @@ export default function App() {
 
   useEffect(() => {
     installKeymap()
+    onFileSaved((path) => isProjectConfig(path) && loadProjectLint(useStore.getState().root))
     startUpdater()
     loadPlugins([claudePlugin])
     ipc.startupArgs().then(async ({ folder, files }) => {
@@ -59,6 +62,7 @@ export default function App() {
 
   // Language servers belong to a folder; switching folders restarts them.
   useEffect(() => {
+    loadProjectLint(root)
     return () => {
       stopAllServers()
     }

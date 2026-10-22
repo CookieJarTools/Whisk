@@ -3,6 +3,9 @@ import { languageFor } from '../lib/languages'
 import { serverFor } from '../lsp/servers'
 import { getLoadedPlugins, openPluginsFolder } from '../plugins/host'
 import { Icon } from './Icon'
+import { nextDiagnostic } from '@codemirror/lint'
+import { getView } from '../editor/views'
+import { shortcutLabel } from '../keymap/keymap'
 import { installUpdate, useUpdates } from '../updates/updates'
 
 export function StatusBar() {
@@ -14,6 +17,7 @@ export function StatusBar() {
   const serverDef = active ? serverFor(active) : null
   const server = serverDef ? servers[serverDef.key] : undefined
   const plugins = getLoadedPlugins()
+  const problems = useStore((s) => (s.active ? s.problems[s.active] : undefined))
   const update = useUpdates((s) => (s.phase === 'ready' ? s.info?.version : null))
 
   return (
@@ -30,6 +34,21 @@ export function StatusBar() {
         >
           <span className={`sb-dot ${server?.state ?? ''}`} />
           {server?.state === 'missing' ? `${serverDef.label} not installed` : (server?.message ?? serverDef.label)}
+        </button>
+      )}
+      {problems && problems.errors + problems.warnings + problems.infos > 0 && (
+        <button
+          className="sb-item sb-problems"
+          title={`Next problem (${shortcutLabel('problems.next')}) · list them (${shortcutLabel('problems.list') || 'Find action'})`}
+          onClick={() => {
+            const view = getView(active)
+            if (view) nextDiagnostic(view)
+            view?.focus()
+          }}
+        >
+          {problems.errors > 0 && <span className="sb-err">● {problems.errors}</span>}
+          {problems.warnings > 0 && <span className="sb-warn">▲ {problems.warnings}</span>}
+          {problems.infos > 0 && <span className="sb-info">◆ {problems.infos}</span>}
         </button>
       )}
       <div className="sb-spacer" />

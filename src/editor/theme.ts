@@ -165,6 +165,46 @@ const chrome = EditorView.theme(
       textDecoration: 'underline wavy var(--warn)',
       textUnderlineOffset: '3px'
     },
+    // Notes (info and hints) stay quiet: a dotted line, not a squiggle.
+    '.cm-lintRange-info, .cm-lintRange-hint': {
+      backgroundImage: 'none',
+      textDecoration: 'underline dotted var(--info)',
+      textUnderlineOffset: '3px'
+    },
+    '.cm-diagnostic': {
+      padding: '4px 8px 4px 10px',
+      fontFamily: 'var(--font-mono)',
+      fontSize: '11.5px'
+    },
+    '.cm-diagnostic-info': {
+      borderLeftColor: 'var(--info)'
+    },
+    '.cm-lint-rule': {
+      marginLeft: '8px',
+      color: 'var(--text-faint)',
+      fontSize: '10.5px'
+    },
+    '.cm-diagnosticAction': {
+      backgroundColor: 'var(--surface-3)',
+      color: 'var(--text)',
+      borderRadius: 'var(--r-sm)',
+      padding: '1px 8px',
+      marginLeft: '8px',
+      font: 'inherit'
+    },
+    '.cm-diagnosticSource': {
+      display: 'none'
+    },
+    '.cm-panel.cm-panel-lint ul': {
+      maxHeight: '180px',
+      fontFamily: 'var(--font-mono)'
+    },
+    '.cm-panel.cm-panel-lint [aria-selected]': {
+      backgroundColor: 'var(--accent-dim)'
+    },
+    '.cm-gutter-lint': {
+      width: '12px'
+    },
     // Code lens row above declarations, e.g. "✦ Ask Claude · + context"
     '.cm-lens': {
       fontSize: '10.5px',

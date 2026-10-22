@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { PresetId } from '../keymap/presets'
 import type { CustomServer } from '../lsp/catalogue'
+import type { LintOverrides } from '../lint/config'
 
 /** User preferences, saved to localStorage as one object. */
 export interface Settings {
@@ -22,6 +23,8 @@ export interface Settings {
   autoUpdate: boolean
   /** Offer pre-release versions as updates. */
   prereleases: boolean
+  /** Changes to the built-in lint rules; anything unset keeps the rule's default. */
+  lint: LintOverrides
 }
 
 interface SettingsStore extends Settings {
@@ -43,7 +46,8 @@ export const DEFAULT_SETTINGS: Settings = {
   keyOverrides: {},
   customServers: [],
   autoUpdate: true,
-  prereleases: false
+  prereleases: false,
+  lint: {}
 }
 
 export const FONT_SIZES = { min: 10, max: 20, step: 0.5 }
@@ -70,8 +74,8 @@ function save(settings: Settings) {
 }
 
 function pick(s: SettingsStore): Settings {
-  const { hideTitleBar, hideExplorer, editorFontSize, wordWrap, scopeRails, codeLens, keymapPreset, keyOverrides, customServers, autoUpdate, prereleases } = s
-  return { hideTitleBar, hideExplorer, editorFontSize, wordWrap, scopeRails, codeLens, keymapPreset, keyOverrides, customServers, autoUpdate, prereleases }
+  const { hideTitleBar, hideExplorer, editorFontSize, wordWrap, scopeRails, codeLens, keymapPreset, keyOverrides, customServers, autoUpdate, prereleases, lint } = s
+  return { hideTitleBar, hideExplorer, editorFontSize, wordWrap, scopeRails, codeLens, keymapPreset, keyOverrides, customServers, autoUpdate, prereleases, lint }
 }
 
 export const useSettings = create<SettingsStore>((set, get) => ({

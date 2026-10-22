@@ -52,6 +52,7 @@ These are the defaults in the Whisk keymap. Change any of them in **Settings ›
 | Ctrl+, | Settings |
 | Ctrl+Alt+C | Compact mode |
 | Ctrl+Alt+S | Show / hide the explorer |
+| F8 / Shift+F8 | Next / previous problem |
 | Ctrl+Alt+A | Ask Claude about the code at the cursor |
 
 ## Language servers
@@ -67,6 +68,51 @@ Language not listed? Click **Add your own** and enter the server's command and t
 For C#, open the folder that contains your `.sln` file.
 
 Without a language server, F12 still jumps to declarations in the open file and to types anywhere in the project.
+
+## Checking your code
+
+Whisk checks every file as you type and underlines problems. The count shows in the status bar; press F8 to jump to the next one. Some come with a quick fix, like removing trailing spaces.
+
+There are two kinds of check:
+
+- **Language server errors.** Compiler errors and warnings from the language's own server, once it's installed. These are exact.
+- **Whisk's rules.** Simple checks that work on any language, with or without a server:
+
+| Rule | Default |
+|---|---|
+| Trailing whitespace | Note |
+| Newline at end of file | Note |
+| Too many blank lines (more than 2) | Note |
+| Line too long (over 150 characters) | Note |
+| Mixed indentation (spaces in a tab file, or the reverse) | Warning |
+| TODO, FIXME and HACK comments | Note |
+| Nesting too deep (more than 4 levels in a method) | Warning |
+| Method too long (over 80 lines) | Warning |
+| Empty `catch` block | Warning |
+| Leftover debug output (`Debug.Log`, `console.log`…) | Off |
+
+Change any of them in **Settings › Linter**: turn a rule off, make it a warning or an error, or change its limit. You can also add your own rules with a regular expression, and list paths to skip.
+
+To share rules with your team, click **Create .whisk/lint.json** in the same place. Whisk saves your rules into the project, and anything in that file wins over each person's own settings. Commit it like any other file:
+
+```json
+{
+  "rules": {
+    "max-nesting": { "severity": "error", "options": { "max": 2 } },
+    "debug-output": { "severity": "warning" }
+  },
+  "custom": [
+    {
+      "id": "no-find-object",
+      "pattern": "FindObjectOfType",
+      "message": "Cache this in Awake instead",
+      "severity": "warning",
+      "files": "*.cs"
+    }
+  ],
+  "ignore": ["Assets/Plugins/**", "**/*.g.cs"]
+}
+```
 
 ## Claude
 

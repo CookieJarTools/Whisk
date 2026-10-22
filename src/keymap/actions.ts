@@ -2,6 +2,7 @@ import type { EditorView } from '@codemirror/view'
 import { copyLineDown, deleteLine, moveLineDown, moveLineUp, toggleComment } from '@codemirror/commands'
 import { findNext, findPrevious, selectNextOccurrence } from '@codemirror/search'
 import { startCompletion } from '@codemirror/autocomplete'
+import { nextDiagnostic, openLintPanel, previousDiagnostic } from '@codemirror/lint'
 import { formatDocument } from '@codemirror/lsp-client'
 import { useStore } from '../store/store'
 import { useSettings, FONT_SIZES } from '../store/settings'
@@ -69,6 +70,9 @@ export const BUILT_IN_ACTIONS: Action[] = [
     editor: true,
     run: onEditor((v) => (void goToDeclarationOrUsages(v), true))
   },
+  { id: 'problems.next', title: 'Next problem', category: 'Navigation', editor: true, run: onEditor(nextDiagnostic) },
+  { id: 'problems.previous', title: 'Previous problem', category: 'Navigation', editor: true, run: onEditor(previousDiagnostic) },
+  { id: 'problems.list', title: 'List problems in this file', category: 'Navigation', editor: true, run: onEditor(openLintPanel) },
   { id: 'nav.usages', title: 'Find usages', category: 'Navigation', editor: true, run: onEditor((v) => (void showUsagesOf(v), true)) },
 
   // Editing

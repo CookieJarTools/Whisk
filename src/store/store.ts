@@ -29,6 +29,12 @@ export interface MenuItem {
   onSelect?: () => void
 }
 
+export interface Problems {
+  errors: number
+  warnings: number
+  infos: number
+}
+
 export interface CursorInfo {
   line: number
   col: number
@@ -44,6 +50,8 @@ interface State {
   active: string | null
   dirty: Record<string, boolean>
   cursor: CursorInfo | null
+  /** Problem counts per open file, from Whisk's rules and the language server. */
+  problems: Record<string, Problems>
   markdownMode: MarkdownMode
   markdownText: Record<string, string>
   servers: Record<string, { state: ServerState; message?: string }>
@@ -66,6 +74,7 @@ interface State {
   setActive(path: string): void
   setDirty(path: string, dirty: boolean): void
   setCursor(cursor: CursorInfo | null): void
+  setProblems(path: string, problems: Problems): void
   setMarkdownMode(mode: MarkdownMode): void
   setMarkdownText(path: string, text: string): void
   setServer(key: string, state: ServerState, message?: string): void
@@ -119,6 +128,7 @@ export const useStore = create<State>((set, get) => ({
   active: null,
   dirty: {},
   cursor: null,
+  problems: {},
   markdownMode: 'split',
   markdownText: {},
   servers: {},
@@ -184,6 +194,7 @@ export const useStore = create<State>((set, get) => ({
   setActive: (path) => set({ active: path }),
   setDirty: (path, dirty) => set((s) => (s.dirty[path] === dirty ? s : { dirty: { ...s.dirty, [path]: dirty } })),
   setCursor: (cursor) => set({ cursor }),
+  setProblems: (path, problems) => set((s) => ({ problems: { ...s.problems, [path]: problems } })),
   setMarkdownMode: (mode) => set({ markdownMode: mode }),
   setMarkdownText: (path, text) => set((s) => ({ markdownText: { ...s.markdownText, [path]: text } })),
   setServer: (key, state, message) => set((s) => ({ servers: { ...s.servers, [key]: { state, message } } })),
