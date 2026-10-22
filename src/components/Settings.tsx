@@ -6,7 +6,7 @@ import { KeymapSettings } from './KeymapSettings'
 import { UpdatesSettings } from './UpdatesSettings'
 import { LinterSettings } from './LinterSettings'
 import { shortcutLabel } from '../keymap/keymap'
-import { getLoadedPlugins, ide, openPluginsFolder } from '../plugins/host'
+import { ide, openPluginsFolder, usePlugins } from '../plugins/host'
 import { Icon } from './Icon'
 
 type Section = 'layout' | 'editor' | 'keymap' | 'linter' | 'claude' | 'languages' | 'plugins' | 'updates'
@@ -110,7 +110,7 @@ function Claude() {
 }
 
 function Plugins() {
-  const plugins = getLoadedPlugins()
+  const plugins = usePlugins((s) => s.loaded)
   return (
     <>
       {plugins.map((p) => (

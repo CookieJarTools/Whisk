@@ -1,7 +1,7 @@
 import { useStore } from '../store/store'
 import { languageFor } from '../lib/languages'
 import { serverFor } from '../lsp/servers'
-import { getLoadedPlugins, openPluginsFolder } from '../plugins/host'
+import { openPluginsFolder, usePlugins } from '../plugins/host'
 import { Icon } from './Icon'
 import { nextDiagnostic } from '@codemirror/lint'
 import { getView } from '../editor/views'
@@ -16,7 +16,7 @@ export function StatusBar() {
   const lang = active ? languageFor(active) : null
   const serverDef = active ? serverFor(active) : null
   const server = serverDef ? servers[serverDef.key] : undefined
-  const plugins = getLoadedPlugins()
+  const plugins = usePlugins((s) => s.loaded)
   const problems = useStore((s) => (s.active ? s.problems[s.active] : undefined))
   const update = useUpdates((s) => (s.phase === 'ready' ? s.info?.version : null))
 

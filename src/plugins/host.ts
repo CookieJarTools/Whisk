@@ -1,3 +1,4 @@
+import { create } from 'zustand'
 import type { CommandDef, IdeApi, IdePlugin, PluginContext, SymbolAction } from './api'
 import { gatherContext } from './context'
 import { ipc } from '../lib/ipc'
@@ -10,11 +11,18 @@ import { refreshLenses } from '../editor/codeLens'
 
 const actions: SymbolAction[] = []
 const commands: CommandDef[] = []
-const loaded: { id: string; name: string; source: 'built-in' | 'user' }[] = []
+export interface LoadedPlugin {
+  id: string
+  name: string
+  source: 'built-in' | 'user'
+}
+
+/** Kept in a store so the status bar and Settings update when plugins finish loading. */
+export const usePlugins = create<{ loaded: LoadedPlugin[] }>(() => ({ loaded: [] }))
 
 export const getSymbolActions = (): readonly SymbolAction[] => actions
 export const getCommands = (): readonly CommandDef[] => commands
-export const getLoadedPlugins = () => loaded
+export const getLoadedPlugins = () => usePlugins.getState().loaded
 
 function refreshAllLenses() {
   for (const view of allViews()) view.dispatch({ effects: refreshLenses.of(null) })
@@ -96,7 +104,7 @@ function contextFor(pluginId: string): PluginContext {
 async function activate(plugin: IdePlugin, source: 'built-in' | 'user') {
   try {
     await plugin.activate(contextFor(plugin.id))
-    loaded.push({ id: plugin.id, name: plugin.name, source })
+    usePlugins.setState((s) => ({ loaded: [...s.loaded, { id: plugin.id, name: plugin.name, source }] }))
   } catch (e) {
     useStore.getState().toast(`Plugin ${plugin.name} failed to start: ${e}`, 'error')
   }
