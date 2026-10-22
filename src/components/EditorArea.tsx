@@ -7,6 +7,7 @@ import { attachLanguageServer } from '../lsp/servers'
 import { isMarkdown } from '../lib/languages'
 import { relativePath } from '../lib/paths'
 import { Icon } from './Icon'
+import { ErrorBoundary } from './ErrorBoundary'
 import { fileIcon } from './Sidebar'
 
 const NO_CRUMBS: CursorInfo['crumbs'] = []
@@ -148,7 +149,19 @@ export function EditorArea() {
       <div className="editor-area">
         <div className="editor-pane" style={showEditor && tabs.length > 0 ? undefined : { display: 'none' }}>
           {tabs.map((t) => (
-            <EditorHost key={t.path} tab={t} visible={t.path === active && showEditor} />
+            <div key={t.path} className="editor-slot" style={t.path === active && showEditor ? undefined : { display: 'none' }}>
+              <ErrorBoundary
+                scope="editor"
+                title={`Couldn't open ${t.name}`}
+                actions={
+                  <button className="btn" onClick={() => useStore.getState().closeTab(t.path)}>
+                    Close this file
+                  </button>
+                }
+              >
+                <EditorHost tab={t} visible={t.path === active && showEditor} />
+              </ErrorBoundary>
+            </div>
           ))}
         </div>
         {showPreview && active && <MarkdownPreview path={active} full={!showEditor} />}

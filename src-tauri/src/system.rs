@@ -262,3 +262,20 @@ pub fn copy_text(app: AppHandle, text: String) -> Result<(), String> {
     use tauri_plugin_clipboard_manager::ClipboardExt;
     app.clipboard().write_text(text).map_err(|e| e.to_string())
 }
+
+const MAX_LOG_BYTES: u64 = 1_000_000;
+
+/// Appends a line to `~/.whisk/logs/whisk.log`, starting afresh (keeping the
+/// previous file as `whisk.old.log`) once it passes 1 MB.
+#[tauri::command]
+pub fn append_log(app: AppHandle, line: String) -> Result<(), String> {
+    use std::io::Write;
+    let dir = app.path().home_dir().map_err(|e| e.to_string())?.join(".whisk").join("logs");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let path = dir.join("whisk.log");
+    if std::fs::metadata(&path).map(|m| m.len() > MAX_LOG_BYTES).unwrap_or(false) {
+        let _ = std::fs::rename(&path, dir.join("whisk.old.log"));
+    }
+    let mut file = std::fs::OpenOptions::new().create(true).append(true).open(&path).map_err(|e| e.to_string())?;
+    writeln!(file, "{line}").map_err(|e| e.to_string())
+}

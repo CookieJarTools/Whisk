@@ -61,6 +61,60 @@ function visualLength(text: string, tabSize: number): number {
   return col
 }
 
+/** Each of these adds a way through a method. */
+const BRANCH_RE = /\b(if|for|foreach|while|case|catch|elif|except)\b|&&|\|\||\band\b|\bor\b/g
+
+/** Code with comments and string contents blanked out, so words inside them don't count. */
+function codeOnly(text: string): string {
+  return text
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/\/\/.*$/gm, ' ')
+    .replace(/(^|\s)#(?!\[).*$/gm, ' ')
+    .replace(/"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`/g, '""')
+}
+
+/** Receivers that aren't real arguments: Python's self/cls, Rust's self in its forms. */
+const RECEIVER_RE = /^(self|cls|&\s*(mut\s+)?self|mut\s+self|\*|\/)$/
+
+/**
+ * A declaration's parameters: the text between the brackets after its name,
+ * split on top-level commas. `from`/`to` cover the brackets, for underlining.
+ */
+export function parameterList(doc: Text, headerLine: number, blockFrom: number, name: string): { params: string[]; from: number; to: number } | null {
+  const start = doc.line(headerLine).from
+  const text = doc.sliceString(start, blockFrom)
+  const named = new RegExp(`\\b${name.replace(/[$]/g, '\\$')}\\s*(<[^()]*>)?\\s*\\(`).exec(text)
+  const open = named ? named.index + named[0].length - 1 : text.indexOf('(', Math.max(0, text.indexOf(name)))
+  if (open < 0) return null
+  const params: string[] = []
+  let depth = 0
+  let current = ''
+  let quote = ''
+  for (let i = open; i < text.length; i++) {
+    const ch = text[i]
+    if (quote) {
+      current += ch
+      if (ch === quote && text[i - 1] !== '\\') quote = ''
+      continue
+    }
+    if (ch === '"' || ch === "'") quote = ch
+    if ('([{<'.includes(ch)) depth++
+    if (')]}>'.includes(ch) && !(ch === '>' && text[i - 1] === '=')) depth--
+    if (depth === 0) {
+      params.push(current.slice(1))
+      const cleaned = params.map((p) => p.trim()).filter((p) => p && !RECEIVER_RE.test(p))
+      return { params: cleaned, from: start + open, to: start + i + 1 }
+    }
+    if (ch === ',' && depth === 1) {
+      params.push(current.slice(1))
+      current = '('
+      continue
+    }
+    current += ch
+  }
+  return null
+}
+
 export const RULES: RuleDef[] = [
   {
     id: 'trailing-whitespace',
@@ -232,6 +286,62 @@ export const RULES: RuleDef[] = [
         out.push({ from, to: at >= 0 ? from + fn.name.length : header.to, message: `${fn.name} is ${length} lines long (at most ${limit})` })
       }
       return out
+    }
+  },
+  {
+    id: 'max-parameters',
+    title: 'Too many parameters',
+    description: 'Methods that take a lot of parameters are hard to call correctly. Grouping them into a type usually helps.',
+    severity: 'warning',
+    options: [{ key: 'max', label: 'Most parameters', type: 'number', default: 5 }],
+    check({ doc, scope }, { max }) {
+      if (!scope) return []
+      const limit = Number(max)
+      const out: Finding[] = []
+      for (const fn of scope.symbols) {
+        if (fn.kind !== 'method' && fn.kind !== 'function') continue
+        const list = parameterList(doc, fn.headerLine, fn.block.from, fn.name)
+        if (!list || list.params.length <= limit) continue
+        out.push({ from: list.from, to: list.to, message: `${fn.name} takes ${list.params.length} parameters (at most ${limit})` })
+      }
+      return out
+    }
+  },
+  {
+    id: 'max-complexity',
+    title: 'Method too complex',
+    description: 'Counts the ways through a method: each if, loop, case, catch, && and || adds one. High counts are hard to follow and to test.',
+    severity: 'warning',
+    options: [{ key: 'max', label: 'Highest complexity', type: 'number', default: 15 }],
+    check({ doc, scope }, { max }) {
+      if (!scope) return []
+      const limit = Number(max)
+      const out: Finding[] = []
+      for (const fn of scope.symbols) {
+        if (fn.kind !== 'method' && fn.kind !== 'function') continue
+        const body = codeOnly(doc.sliceString(fn.block.from, fn.block.to + 1))
+        const branches = (body.match(BRANCH_RE) ?? []).length
+        const complexity = 1 + branches
+        if (complexity <= limit) continue
+        const header = doc.line(fn.headerLine)
+        const at = header.text.indexOf(fn.name)
+        const from = header.from + Math.max(0, at)
+        out.push({ from, to: at >= 0 ? from + fn.name.length : header.to, message: `${fn.name} has a complexity of ${complexity} (at most ${limit})` })
+      }
+      return out
+    }
+  },
+  {
+    id: 'max-file-length',
+    title: 'File too long',
+    description: 'Very long files usually hold more than one idea and are easier to work with split up.',
+    severity: 'info',
+    options: [{ key: 'max', label: 'Longest file, in lines', type: 'number', default: 800 }],
+    check({ doc, extension }, { max }) {
+      const limit = Number(max)
+      if (PROSE.has(extension) || doc.lines <= limit) return []
+      const first = doc.line(1)
+      return [{ from: first.from, to: first.to, message: `File is ${doc.lines} lines long (at most ${limit})` }]
     }
   },
   {

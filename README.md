@@ -97,6 +97,9 @@ There are two kinds of check:
 | TODO, FIXME and HACK comments | Note |
 | Nesting too deep (more than 4 levels in a method) | Warning |
 | Method too long (over 80 lines) | Warning |
+| Too many parameters (more than 5) | Warning |
+| Method too complex (more than 15 branches) | Warning |
+| File too long (over 800 lines) | Note |
 | Empty `catch` block | Warning |
 | Leftover debug output (`Debug.Log`, `console.log`…) | Off |
 

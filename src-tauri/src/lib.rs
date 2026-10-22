@@ -41,6 +41,7 @@ pub fn run() {
             system::run_command,
             system::refresh_path,
             system::copy_text,
+            system::append_log,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Whisk");

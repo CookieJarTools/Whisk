@@ -862,3 +862,63 @@
   font-family: var(--font-mono);
   line-height: 1.5;
 }
+
+/* ---- Error boundaries ---- */
+.editor-slot {
+  position: absolute;
+  inset: 0;
+}
+.crash {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg);
+  overflow: auto;
+}
+#root > .crash {
+  position: fixed;
+}
+.crash-inner {
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.crash-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.crash-message {
+  color: var(--del);
+  line-height: 1.5;
+  user-select: text;
+}
+.crash-actions {
+  display: flex;
+  gap: 8px;
+}
+.crash-details summary {
+  color: var(--text-faint);
+  cursor: pointer;
+}
+.crash-details pre {
+  margin-top: 8px;
+  max-height: 260px;
+  overflow: auto;
+  padding: 10px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 11px;
+  white-space: pre-wrap;
+  user-select: text;
+}
+.crash-note {
+  color: var(--text-faint);
+  font-size: 11px;
+}

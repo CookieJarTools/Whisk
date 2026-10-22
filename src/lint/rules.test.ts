@@ -84,6 +84,44 @@ describe('built-in rules', () => {
   })
 })
 
+describe('method size rules', () => {
+  const params = (src: string, path?: string) =>
+    runLint(input(src, path), defaultConfig()).filter((r) => r.ruleId === 'max-parameters').map((r) => r.message)
+
+  it('counts parameters, keeping generics and defaults together', () => {
+    expect(params('class A\n{\n\tvoid Ok(Dictionary<int, string> map, int b = 1)\n\t{\n\t\tx();\n\t}\n}\n')).toEqual([])
+    expect(params('class A\n{\n\tvoid Big(int a, int b, int c, int d, int e, Dictionary<int, string> f)\n\t{\n\t\tx();\n\t}\n}\n')).toEqual([
+      'Big takes 6 parameters (at most 5)'
+    ])
+  })
+
+  it('reads parameter lists split over several lines', () => {
+    const src = 'class A\n{\n\tpublic A(\n\t\tint a,\n\t\tint b,\n\t\tint c,\n\t\tint d,\n\t\tint e,\n\t\tint f)\n\t{\n\t\tx();\n\t}\n}\n'
+    expect(params(src)).toEqual(['A takes 6 parameters (at most 5)'])
+  })
+
+  it("doesn't count self in Python or Rust", () => {
+    const py = 'class A:\n    def go(self, a, b, c, d, e):\n        pass\n'
+    const doc = Text.of(py.split('\n'))
+    const blocks = scanBlocks(py, 'indent')
+    const found = runLint({ doc, path: 'a.py', extension: 'py', scope: { blocks, symbols: findSymbols(doc, blocks) }, tabSize: 4 }, defaultConfig())
+    expect(found.filter((r) => r.ruleId === 'max-parameters')).toEqual([])
+    expect(params('impl A {\n    fn go(&mut self, a: u8, b: u8, c: u8, d: u8, e: u8) {\n        x();\n    }\n}\n', 'a.rs')).toEqual([])
+  })
+
+  it('scores complexity from branches, ignoring comments and strings', () => {
+    const branches = Array.from({ length: 15 }, (_, i) => `\t\tif (a${i} && b) { x(); }`).join('\n')
+    const src = `class A\n{\n\tvoid Busy()\n\t{\n${branches}\n\t\t// if if if while\n\t\tLog("for if while");\n\t}\n}\n`
+    const found = runLint(input(src), defaultConfig()).filter((r) => r.ruleId === 'max-complexity')
+    expect(found.map((r) => r.message)).toEqual(['Busy has a complexity of 31 (at most 15)'])
+  })
+
+  it('notes very long files', () => {
+    expect(ids('x\n'.repeat(801))).toContain('max-file-length')
+    expect(ids('x\n'.repeat(100))).not.toContain('max-file-length')
+  })
+})
+
 describe('configuration', () => {
   it('layers user and project settings over the defaults', () => {
     const user = mergeConfig(defaultConfig(), { rules: { 'max-line-length': { options: { max: 100 } } } })
