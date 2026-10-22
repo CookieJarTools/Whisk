@@ -1,0 +1,99 @@
+/* Shared CookieJar design tokens (from CrumbTree) — modelled on Linear: neutral near-black greys, low-contrast
+   hairlines, one restrained indigo accent, monospace throughout, small radii and no
+   gradients or glows. Dark is the default and primary theme. */
+
+:root {
+  /* Surfaces */
+  --bg: #0f1011;
+  --surface: #0b0c0d;
+  --surface-2: #17181a;
+  --surface-3: #1f2023;
+  --elevated: #1a1b1e;
+
+  /* Borders & lines */
+  --border: #212226;
+  --border-strong: #2c2d31;
+  --border-faint: #18191b;
+
+  /* Text */
+  --text: #eeeff1;
+  --text-dim: #9c9ea5;
+  --text-faint: #686a71;
+  --text-inverse: #ffffff;
+
+  /* Accent — Linear indigo */
+  --accent: #6e79d6;
+  --accent-hover: #828ce0;
+  --accent-dim: rgba(110, 121, 214, 0.13);
+  --accent-line: rgba(110, 121, 214, 0.45);
+
+  /* Semantics — muted so they sit with the greys */
+  --add: #4cb782;
+  --add-dim: rgba(76, 183, 130, 0.12);
+  --del: #eb5757;
+  --del-dim: rgba(235, 87, 87, 0.12);
+  --warn: #f2994a;
+  --warn-dim: rgba(242, 153, 74, 0.11);
+  --info: #4ea7fc;
+  --info-dim: rgba(78, 167, 252, 0.1);
+
+  /* Radii & spacing */
+  --r-sm: 5px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 32px;
+
+  /* Typography */
+  --font-ui: var(--font-mono);
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', 'Cascadia Code', ui-monospace, Consolas, monospace;
+
+  /* Layout */
+  --sidebar-w: 236px;
+  --topbar-h: 44px;
+  --row-h: 30px;
+
+  /* Elevation — only for things that float (menus, dialogs) */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-pop: 0 0 0 1px rgba(0, 0, 0, 0.2), 0 12px 32px rgba(0, 0, 0, 0.45);
+
+  /* Graph lane palette — 12 hues, desaturated a notch so the graph doesn't shout */
+  --lane-0: #6e79d6;
+  --lane-1: #4ea7fc;
+  --lane-2: #4cb782;
+  --lane-3: #f2994a;
+  --lane-4: #b884e0;
+  --lane-5: #e0698f;
+  --lane-6: #3fb5b5;
+  --lane-7: #d6b656;
+  --lane-8: #8f9bef;
+  --lane-9: #7fbf5a;
+  --lane-10: #e07b5a;
+  --lane-11: #9aa3b0;
+}
+
+:root[data-theme='light'] {
+  --bg: #ffffff;
+  --surface: #f9f9fa;
+  --surface-2: #f1f1f3;
+  --surface-3: #e8e8eb;
+  --elevated: #ffffff;
+  --border: #e6e6e9;
+  --border-strong: #d6d6db;
+  --border-faint: #efeff1;
+  --text: #1b1c1f;
+  --text-dim: #5f6168;
+  --text-faint: #8d8f96;
+  --text-inverse: #ffffff;
+  --accent: #5e6ad2;
+  --accent-hover: #4e59c4;
+  --accent-dim: rgba(94, 106, 210, 0.1);
+  --accent-line: rgba(94, 106, 210, 0.45);
+  --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-pop: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 12px 32px rgba(0, 0, 0, 0.12);
+}

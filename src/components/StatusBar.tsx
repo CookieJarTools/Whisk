@@ -1,0 +1,56 @@
+import { useStore } from '../store/store'
+import { languageFor } from '../lib/languages'
+import { serverFor } from '../lsp/servers'
+import { getLoadedPlugins, openPluginsFolder } from '../plugins/host'
+import { Icon } from './Icon'
+import { installUpdate, useUpdates } from '../updates/updates'
+
+export function StatusBar() {
+  const active = useStore((s) => s.active)
+  const cursor = useStore((s) => s.cursor)
+  const servers = useStore((s) => s.servers)
+  const toast = useStore((s) => s.toast)
+  const lang = active ? languageFor(active) : null
+  const serverDef = active ? serverFor(active) : null
+  const server = serverDef ? servers[serverDef.key] : undefined
+  const plugins = getLoadedPlugins()
+  const update = useUpdates((s) => (s.phase === 'ready' ? s.info?.version : null))
+
+  return (
+    <footer className="statusbar">
+      {serverDef && (
+        <button
+          className="sb-item"
+          title={server?.message ?? serverDef.label}
+          onClick={() =>
+            server?.state === 'missing' || server?.state === 'failed'
+              ? useStore.getState().setSettingsOpen(true, 'languages')
+              : toast(server?.message ?? `${serverDef.label} starts when you open a ${lang!.label} file.`)
+          }
+        >
+          <span className={`sb-dot ${server?.state ?? ''}`} />
+          {server?.state === 'missing' ? `${serverDef.label} not installed` : (server?.message ?? serverDef.label)}
+        </button>
+      )}
+      <div className="sb-spacer" />
+      {update && (
+        <button className="sb-item sb-update" title="Restart Whisk to install the update" onClick={() => installUpdate()}>
+          <Icon name="download" size={12} /> Restart to update to {update}
+        </button>
+      )}
+      <button
+        className="sb-item"
+        title={plugins.map((p) => `${p.name} (${p.source})`).join('\n') + '\n\nClick to open the plugins folder'}
+        onClick={() => openPluginsFolder()}
+      >
+        <Icon name="plug" size={12} /> {plugins.length} plugin{plugins.length === 1 ? '' : 's'}
+      </button>
+      {cursor && active && <span className="sb-item">Ln {cursor.line}, Col {cursor.col}</span>}
+      {lang && <span className="sb-item">{lang.label}</span>}
+      <span className="sb-item">UTF-8</span>
+      <button className="sb-item" title="Settings (Ctrl+,)" onClick={() => useStore.getState().setSettingsOpen(true)}>
+        <Icon name="settings" size={12} />
+      </button>
+    </footer>
+  )
+}
