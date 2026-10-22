@@ -1,5 +1,6 @@
 import { Facet, StateField, type Text } from '@codemirror/state'
 import type { BraceFlavor } from '../lib/languages'
+import { logError } from '../lib/log'
 
 /** A `{ … }` block that spans more than one line. Positions are document offsets of the braces. */
 export interface Block {
@@ -54,8 +55,15 @@ export const scopeField = StateField.define<ScopeInfo>({
 
 function analyse(doc: Text, flavor: BraceFlavor): ScopeInfo {
   if (flavor === 'none' || doc.length > MAX_SCAN_CHARS) return { blocks: [], symbols: [] }
-  const blocks = scanBlocks(doc.toString(), flavor)
-  return { blocks, symbols: findSymbols(doc, blocks) }
+  // Rails, breadcrumbs, lenses and lint all build on this; if it fails, the
+  // file loses those extras but still opens.
+  try {
+    const blocks = scanBlocks(doc.toString(), flavor)
+    return { blocks, symbols: findSymbols(doc, blocks) }
+  } catch (e) {
+    logError('scope scan', e)
+    return { blocks: [], symbols: [] }
+  }
 }
 
 /**

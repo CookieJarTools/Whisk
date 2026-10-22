@@ -28,6 +28,7 @@ import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap, s
 import { highlightSelectionMatches } from '@codemirror/search'
 import { closeReferencePanel } from '@codemirror/lsp-client'
 import { findBar } from './findBar'
+import { dominantLineEnding, lineEnding } from './lineEnding'
 import { countProblems, diagnosticsChanged, lintExtension } from '../lint/extension'
 import { shortcutLabel } from '../keymap/keymap'
 import { languageFor, isMarkdown, type BraceFlavor } from '../lib/languages'
@@ -140,8 +141,9 @@ export function createEditor(path: string, text: string, parent: HTMLElement): E
     drawSelection(),
     dropCursor(),
     EditorState.allowMultipleSelections.of(true),
-    // Keep Windows line endings on save rather than silently converting the file.
-    text.includes('\r\n') ? EditorState.lineSeparator.of('\r\n') : [],
+    // Lines split on any ending, so every part of Whisk counts lines alike even
+    // in files that mix them; the file's main ending is written back on save.
+    lineEnding.of(dominantLineEnding(text)),
     EditorState.tabSize.of(4),
     indentUnit.of(detectIndent(text)),
     indentOnInput(),
