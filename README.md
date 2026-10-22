@@ -10,6 +10,15 @@ Whisk is a small, fast code editor for Windows. It has the parts of a big IDE yo
 
 Whisk updates itself. You can change how in **Settings › Updates** (see [Updates](#updates)).
 
+### If Windows warns you
+
+Whisk isn't code-signed yet, so Windows may be cautious about it:
+
+- **SmartScreen** may say "Windows protected your PC". Click **More info**, then **Run anyway**.
+- **Microsoft Defender** has wrongly flagged Whisk as a trojan before and removed it. If that happens, open **Windows Security › Virus & threat protection › Protection history**, find the Whisk entry and choose **Allow on device**.
+
+Only do this for a file you downloaded from this repo's [Releases page](https://github.com/CookieJarTools/Whisk/releases). Each release is built by GitHub Actions straight from the code here, and you can see the build log for every one. Signed releases are on the way.
+
 ## What it does
 
 **Scope rails.** Every block of code gets a coloured line down its left side, so you can see where it starts and ends. The block your cursor is in lights up, and the ones around it fade back.
