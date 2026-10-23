@@ -85,6 +85,9 @@ function Editor() {
       <Row title="Action row above declarations" hint="Plugin actions like “✦ Ask Claude · + context”">
         <Toggle on={s.codeLens} onChange={(v) => s.set({ codeLens: v })} />
       </Row>
+      <Row title="Reformat on save" hint="Ctrl+S tidies the file with its language server first. Auto save leaves it alone.">
+        <Toggle on={s.formatOnSave} onChange={(v) => s.set({ formatOnSave: v })} />
+      </Row>
       <Row title="Reopen files from last time" hint="Each project remembers its open tabs and where the cursor was">
         <Toggle on={s.reopenFiles} onChange={(v) => s.set({ reopenFiles: v })} />
       </Row>

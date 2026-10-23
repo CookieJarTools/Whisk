@@ -77,7 +77,7 @@ export const BUILT_IN_ACTIONS: Action[] = [
   { id: 'nav.usages', title: 'Find usages', category: 'Navigation', editor: true, run: onEditor((v) => (void showUsagesOf(v), true)) },
 
   // Editing
-  { id: 'edit.save', title: 'Save', category: 'Editing', run: () => { const p = store().active; if (p) void saveFile(p) } },
+  { id: 'edit.save', title: 'Save', category: 'Editing', run: () => { const p = store().active; if (p) void saveFile(p, { format: true }) } },
   {
     id: 'edit.closeTab',
     title: 'Close tab',
