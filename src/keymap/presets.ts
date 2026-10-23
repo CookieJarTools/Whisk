@@ -42,6 +42,7 @@ const RIDER: Record<string, string[]> = {
   'edit.closeTab': ['Ctrl+F4'],
   'edit.rename': ['F2', 'Shift+F6'],
   'edit.suggest': ['Ctrl+Space'],
+  'edit.paramInfo': ['Ctrl+P'],
   'edit.format': ['Ctrl+Alt+L'],
   'edit.comment': ['Ctrl+/'],
   'edit.duplicateLine': ['Ctrl+D'],
@@ -64,6 +65,7 @@ const SCOPE: Record<string, string[]> = {
   'nav.back': ['Ctrl+Alt+Left', 'Alt+Left'],
   'nav.forward': ['Ctrl+Alt+Right', 'Alt+Right'],
   'edit.closeTab': ['Ctrl+W', 'Ctrl+F4'],
+  'edit.paramInfo': ['Ctrl+Shift+Space'],
   'editor.fontUp': ['Ctrl+='],
   'editor.fontDown': ['Ctrl+Shift+-']
 }
@@ -97,6 +99,7 @@ const VSCODE: Record<string, string[]> = {
   'edit.closeTab': ['Ctrl+W'],
   'edit.rename': ['F2'],
   'edit.suggest': ['Ctrl+Space'],
+  'edit.paramInfo': ['Ctrl+Shift+Space'],
   'edit.format': ['Shift+Alt+F'],
   'edit.comment': ['Ctrl+/'],
   'edit.duplicateLine': ['Shift+Alt+Down'],
@@ -136,6 +139,7 @@ const VISUAL_STUDIO: Record<string, string[]> = {
   'edit.closeTab': ['Ctrl+F4'],
   'edit.rename': ['F2'],
   'edit.suggest': ['Ctrl+Space', 'Ctrl+J'],
+  'edit.paramInfo': ['Ctrl+Shift+Space'],
   'edit.format': ['Ctrl+Alt+F'],
   'edit.comment': ['Ctrl+/'],
   'edit.duplicateLine': ['Ctrl+D'],

@@ -30,6 +30,7 @@ import { closeReferencePanel } from '@codemirror/lsp-client'
 import { findBar } from './findBar'
 import { dominantLineEnding, lineEnding } from './lineEnding'
 import { countProblems, diagnosticsChanged, lintExtension } from '../lint/extension'
+import { parameterInfo } from './signatureHelp'
 import { shortcutLabel } from '../keymap/keymap'
 import { languageFor, isMarkdown, type BraceFlavor } from '../lib/languages'
 import { useSettings, type Settings } from '../store/settings'
@@ -172,6 +173,7 @@ export function createEditor(path: string, text: string, parent: HTMLElement): E
     scopeField,
     lensPath.of(path),
     lintExtension,
+    parameterInfo,
     prefsCompartment.of(prefExtensions(useSettings.getState(), lang.braces, markdown)),
     editorTheme,
     EditorView.domEventHandlers({

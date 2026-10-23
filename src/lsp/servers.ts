@@ -1,5 +1,5 @@
-import { LSPClient, hoverTooltips, serverCompletion, signatureHelp } from '@codemirror/lsp-client'
-import { mergedServerDiagnostics } from '../lint/diagnostics'
+import { LSPClient, hoverTooltips, serverCompletion } from '@codemirror/lsp-client'
+import { mergedServerDiagnostics, pullDiagnostics } from '../lint/diagnostics'
 import { Compartment } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { ipc } from '../lib/ipc'
@@ -62,7 +62,8 @@ async function start(def: ServerDef, root: string): Promise<Running | null> {
       timeout: 10_000,
       workspace: (c) => new IdeWorkspace(c),
       // No LSP keymaps: rename, definition, usages and format are keymap actions.
-      extensions: [serverCompletion(), hoverTooltips(), signatureHelp(), mergedServerDiagnostics()],
+      // Parameter info is Whisk's own (editor/signatureHelp.ts); hover docs show after 150 ms rather than 300.
+      extensions: [serverCompletion(), hoverTooltips({ hoverTime: 150 }), mergedServerDiagnostics()],
       unhandledNotification: (_c, method, params) => {
         if (method === '$/progress' && params?.value?.kind !== 'end') {
           const v = params.value
@@ -70,6 +71,11 @@ async function start(def: ServerDef, root: string): Promise<Running | null> {
           if (text) useStore.getState().setServer(key, 'ready', text)
         } else if (method === '$/progress') {
           useStore.getState().setServer(key, 'ready', `${def.label} ready`)
+          // Loading (e.g. the solution) finished: ask again for errors in every open file it serves.
+          for (const tab of useStore.getState().tabs) {
+            const view = getView(tab.path)
+            if (view && serverFor(tab.path)?.key === key) void pullDiagnostics(view)
+          }
         }
       }
     }).connect(transport)
