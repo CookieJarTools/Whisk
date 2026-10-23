@@ -56,3 +56,19 @@ fn run_git(cwd: &str, args: &[String], stdin: Option<String>) -> Result<GitOutpu
         stderr: String::from_utf8_lossy(&out.stderr).into_owned(),
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::run_git;
+
+    #[test]
+    fn runs_git_and_feeds_it_stdin() {
+        let dir = std::env::temp_dir().to_string_lossy().into_owned();
+        let version = run_git(&dir, &["--version".into()], None).expect("git runs");
+        assert_eq!(version.code, 0);
+        assert!(version.stdout.starts_with("git version"));
+        // hash-object reads the text from stdin.
+        let hash = run_git(&dir, &["hash-object".into(), "--stdin".into()], Some("hello\n".into())).expect("git runs");
+        assert_eq!(hash.stdout.trim(), "ce013625030ba8dba906f756967f9e9ca394464a");
+    }
+}

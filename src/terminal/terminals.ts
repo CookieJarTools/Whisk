@@ -37,6 +37,12 @@ export const useTerminals = create<TerminalsState>(() => ({ terminals: [], activ
 
 const sessions = new Map<number, Session>()
 const byPty = new Map<number, number>()
+/**
+ * Output that arrived before we knew which terminal it belongs to. ConPTY's
+ * first words are a cursor-position question the shell waits on, so it must
+ * reach xterm (which answers it) rather than be dropped.
+ */
+const early = new Map<number, string[]>()
 const exitListeners = new Map<number, (code: number | null) => void>()
 let nextId = 1
 
@@ -77,6 +83,7 @@ function listenOnce(): Promise<void> {
     await listen<{ id: number; data: string }>('pty-output', (e) => {
       const id = byPty.get(e.payload.id)
       if (id !== undefined) sessions.get(id)?.term.write(e.payload.data)
+      else early.set(e.payload.id, [...(early.get(e.payload.id) ?? []), e.payload.data])
     })
     await listen<{ id: number; code: number | null }>('pty-exit', (e) => {
       const id = byPty.get(e.payload.id)
@@ -174,6 +181,8 @@ export async function openTerminal(options: TerminalOptions = {}): Promise<numbe
     })
     session.ptyId = ptyId
     byPty.set(ptyId, id)
+    for (const data of early.get(ptyId) ?? []) term.write(data)
+    early.delete(ptyId)
     // The screen may have been sized while the shell was starting.
     void invoke('pty_resize', { id: ptyId, cols: term.cols, rows: term.rows }).catch(() => {})
   } catch (e) {

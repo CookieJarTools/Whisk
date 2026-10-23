@@ -69,45 +69,49 @@ fn split_utf8(bytes: &[u8]) -> usize {
     }
 }
 
-#[tauri::command]
-pub fn pty_spawn(
-    app: AppHandle,
-    state: State<'_, PtyState>,
-    cwd: String,
-    program: Option<String>,
-    args: Vec<String>,
-    command_line: Option<String>,
-    env: Option<HashMap<String, String>>,
-    cols: u16,
-    rows: u16,
-) -> Result<u32, String> {
+/// What a terminal runs: an interactive shell, a program, or a command line for the shell.
+pub struct Launch {
+    pub cwd: String,
+    pub program: Option<String>,
+    pub args: Vec<String>,
+    pub command_line: Option<String>,
+    pub env: HashMap<String, String>,
+    pub cols: u16,
+    pub rows: u16,
+}
+
+/// Starts a pseudo-terminal. Output goes to `on_output` as it arrives, and
+/// `on_exit` gets the exit code once the program has ended.
+fn start(
+    launch: Launch,
+    mut on_output: impl FnMut(String) + Send + 'static,
+    on_exit: impl FnOnce(Option<u32>) + Send + 'static,
+) -> Result<Pty, String> {
     let pair = native_pty_system()
-        .openpty(PtySize { rows: rows.max(2), cols: cols.max(10), pixel_width: 0, pixel_height: 0 })
+        .openpty(PtySize { rows: launch.rows.max(2), cols: launch.cols.max(10), pixel_width: 0, pixel_height: 0 })
         .map_err(|e| e.to_string())?;
     // A command line runs through the shell, so it's written the way you'd type it there.
-    let (program, args) = match (program, command_line) {
+    let (program, args) = match (launch.program, launch.command_line) {
         (_, Some(line)) => (default_shell(), shell_args(&line)),
-        (Some(program), None) => (program, args),
-        (None, None) => (default_shell(), args),
+        (Some(program), None) => (program, launch.args),
+        (None, None) => (default_shell(), launch.args),
     };
     let resolved = find_program(&program).map(|p| p.to_string_lossy().into_owned()).unwrap_or(program.clone());
     let mut cmd = CommandBuilder::new(resolved);
     cmd.args(&args);
-    cmd.cwd(&cwd);
+    cmd.cwd(&launch.cwd);
     cmd.env("TERM", "xterm-256color");
     cmd.env("COLORTERM", "truecolor");
-    for (k, v) in env.unwrap_or_default() {
+    for (k, v) in launch.env {
         cmd.env(k, v);
     }
     let mut child = pair.slave.spawn_command(cmd).map_err(|e| format!("Couldn't start {program}: {e}"))?;
     drop(pair.slave);
 
-    let id = state.next_id.fetch_add(1, Ordering::Relaxed) + 1;
     let mut reader = pair.master.try_clone_reader().map_err(|e| e.to_string())?;
     let writer = pair.master.take_writer().map_err(|e| e.to_string())?;
     let killer = child.clone_killer();
 
-    let out_app = app.clone();
     std::thread::spawn(move || {
         let mut buf = [0u8; 16 * 1024];
         let mut pending: Vec<u8> = Vec::new();
@@ -120,26 +124,53 @@ pub fn pty_spawn(
                     if whole == 0 {
                         continue;
                     }
-                    let data = String::from_utf8_lossy(&pending[..whole]).into_owned();
+                    on_output(String::from_utf8_lossy(&pending[..whole]).into_owned());
                     pending.drain(..whole);
-                    let _ = out_app.emit("pty-output", PtyOutput { id, data });
                 }
             }
         }
     });
 
     // ConPTY doesn't end the output stream when the program exits, so wait on
-    // the process itself, then drop the terminal to close everything.
-    let ptys = state.ptys.clone();
+    // the process itself.
     std::thread::spawn(move || {
         let code = child.wait().ok().map(|s| s.exit_code());
         // Give the reader a moment to pass on the last of the output.
         std::thread::sleep(std::time::Duration::from_millis(120));
-        ptys.lock().unwrap().remove(&id);
-        let _ = app.emit("pty-exit", PtyExit { id, code });
+        on_exit(code);
     });
 
-    state.ptys.lock().unwrap().insert(id, Pty { master: pair.master, writer, killer });
+    Ok(Pty { master: pair.master, writer, killer })
+}
+
+#[tauri::command]
+pub fn pty_spawn(
+    app: AppHandle,
+    state: State<'_, PtyState>,
+    cwd: String,
+    program: Option<String>,
+    args: Vec<String>,
+    command_line: Option<String>,
+    env: Option<HashMap<String, String>>,
+    cols: u16,
+    rows: u16,
+) -> Result<u32, String> {
+    let id = state.next_id.fetch_add(1, Ordering::Relaxed) + 1;
+    let out_app = app.clone();
+    let ptys = state.ptys.clone();
+    let launch = Launch { cwd, program, args, command_line, env: env.unwrap_or_default(), cols, rows };
+    let pty = start(
+        launch,
+        move |data| {
+            let _ = out_app.emit("pty-output", PtyOutput { id, data });
+        },
+        move |code| {
+            // Dropping the terminal closes its pipes.
+            ptys.lock().unwrap().remove(&id);
+            let _ = app.emit("pty-exit", PtyExit { id, code });
+        },
+    )?;
+    state.ptys.lock().unwrap().insert(id, pty);
     Ok(id)
 }
 
@@ -169,7 +200,48 @@ pub fn pty_kill(state: State<'_, PtyState>, id: u32) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::split_utf8;
+    use super::{split_utf8, start, Launch};
+    use std::sync::mpsc;
+    use std::time::Duration;
+
+    #[test]
+    fn runs_a_command_line_through_the_shell_and_reports_its_exit() {
+        let (out_tx, out_rx) = mpsc::channel::<String>();
+        let (exit_tx, exit_rx) = mpsc::channel::<Option<u32>>();
+        let launch = Launch {
+            cwd: std::env::temp_dir().to_string_lossy().into_owned(),
+            program: None,
+            args: vec![],
+            command_line: Some("Write-Output 'whisk-pty-ok'; exit 3".into()),
+            env: Default::default(),
+            cols: 80,
+            rows: 24,
+        };
+        let mut pty = start(launch, move |data| drop(out_tx.send(data)), move |code| {
+            let _ = exit_tx.send(code);
+        })
+        .expect("terminal starts");
+        // ConPTY asks where the cursor is before running anything; xterm.js answers in the app.
+        let mut output = String::new();
+        let deadline = std::time::Instant::now() + Duration::from_secs(30);
+        let code = loop {
+            if let Ok(data) = out_rx.recv_timeout(Duration::from_millis(50)) {
+                if data.contains("\x1b[6n") {
+                    use std::io::Write;
+                    pty.writer.write_all(b"\x1b[1;1R").unwrap();
+                }
+                output.push_str(&data);
+            }
+            if let Ok(code) = exit_rx.try_recv() {
+                break code;
+            }
+            assert!(std::time::Instant::now() < deadline, "program didn't exit; output so far: {output:?}");
+        };
+        output.extend(out_rx.try_iter());
+        drop(pty);
+        assert!(output.contains("whisk-pty-ok"), "output was: {output:?}");
+        assert_eq!(code, Some(3));
+    }
 
     #[test]
     fn keeps_a_split_character_for_the_next_read() {
