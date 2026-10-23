@@ -1,6 +1,7 @@
 mod fs;
 mod git;
 mod lsp;
+mod pty;
 mod search;
 mod system;
 mod updates;
@@ -15,6 +16,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(updates::UpdateState::default())
         .manage(lsp::LspState::default())
+        .manage(pty::PtyState::default())
         .invoke_handler(tauri::generate_handler![
             fs::list_dir,
             fs::read_text,
@@ -44,6 +46,10 @@ pub fn run() {
             system::copy_text,
             system::paste_text,
             git::git,
+            pty::pty_spawn,
+            pty::pty_write,
+            pty::pty_resize,
+            pty::pty_kill,
             system::append_log,
         ])
         .run(tauri::generate_context!())

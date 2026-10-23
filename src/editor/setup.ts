@@ -42,6 +42,7 @@ import { codeLens, lensPath } from './codeLens'
 import { blockFolding } from './folding'
 import { changeGutter, loadGitBase } from '../git/gutter'
 import { blameExtension } from '../git/blame'
+import { refreshTerminalFonts } from '../terminal/terminals'
 import { stickyHeader } from './stickyHeader'
 import { allViews, getView, isDirty } from './views'
 import { hasLanguageServer, rename } from './actions'
@@ -80,6 +81,7 @@ useSettings.subscribe((settings, prev) => {
   if (settings.editorFontSize !== prev.editorFontSize) {
     applyFontSize(settings.editorFontSize)
     allViews().forEach((v) => v.requestMeasure())
+    refreshTerminalFonts()
   }
   if (settings.wordWrap === prev.wordWrap && settings.scopeRails === prev.scopeRails && settings.codeLens === prev.codeLens && settings.stickyHeader === prev.stickyHeader) return
   for (const view of allViews()) {

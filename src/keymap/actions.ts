@@ -18,6 +18,8 @@ import { compareWithClipboard, compareWithFile } from '../editor/compare'
 import { gotoChange, showFileDiff } from '../git/gutter'
 import { toggleBlame } from '../git/blame'
 import { pull, push, useGit } from '../git/store'
+import { usePanel } from '../store/panel'
+import { openTerminal } from '../terminal/terminals'
 
 /** Something a shortcut can trigger. Plugin commands become actions too (see keymap.ts). */
 export interface Action {
@@ -58,6 +60,9 @@ export const BUILT_IN_ACTIONS: Action[] = [
   { id: 'view.otherPane', title: 'Switch to the other side', category: 'Layout', run: () => store().focusPane(store().focusedPane === 1 ? 0 : 1) },
   { id: 'diff.clipboard', title: 'Compare with clipboard', category: 'Editing', run: () => void compareWithClipboard() },
   { id: 'diff.file', title: 'Compare with file…', category: 'Editing', run: () => void compareWithFile() },
+  { id: 'view.terminal', title: 'Show / hide terminal', category: 'Layout', run: () => usePanel.getState().toggle('terminal') },
+  { id: 'view.newTerminal', title: 'New terminal', category: 'Layout', run: () => void openTerminal() },
+  { id: 'view.panel', title: 'Show / hide bottom panel', category: 'Layout', run: () => (usePanel.getState().open ? usePanel.getState().close() : usePanel.getState().show(usePanel.getState().view)) },
   { id: 'git.commit', title: 'Commit…', category: 'Git', run: () => store().setSideView(store().sideView === 'commit' ? 'files' : 'commit') },
   { id: 'git.push', title: 'Push', category: 'Git', run: () => void push() },
   { id: 'git.pull', title: 'Pull', category: 'Git', run: () => void pull() },

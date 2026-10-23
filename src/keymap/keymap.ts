@@ -87,9 +87,17 @@ function inTextField(target: EventTarget | null): boolean {
   return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT')
 }
 
+/** Keys typed in a terminal go to the shell, except shortcuts for the layout, the app, running and debugging. */
+const TERMINAL_ACTIONS = /^(view\.|app\.|run\.|debug\.)/
+
+function inTerminal(target: EventTarget | null): boolean {
+  return !!(target as HTMLElement | null)?.closest?.('.xterm')
+}
+
 function dispatch(shortcut: string, event?: KeyboardEvent): boolean {
   const action = lookup(shortcut)
   if (!action) return false
+  if (event && inTerminal(event.target) && !TERMINAL_ACTIONS.test(action.id)) return false
   if (action.editor && !getView(useStore.getState().active)) return false
   if (event && inTextField(event.target) && (action.editor || TEXT_FIELD_KEYS.test(shortcut))) return false
   event?.preventDefault()
@@ -109,7 +117,7 @@ function onKeyDown(e: KeyboardEvent) {
 
 function onKeyUp(e: KeyboardEvent) {
   if (recording) return
-  if (doubleShift.keyup(e)) dispatch(DOUBLE_SHIFT)
+  if (doubleShift.keyup(e) && !inTerminal(e.target)) dispatch(DOUBLE_SHIFT)
 }
 
 let installed = false

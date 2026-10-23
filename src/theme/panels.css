@@ -1402,3 +1402,141 @@
 .cm-blame-gutter .cm-gutterElement:hover .cm-blame-entry {
   color: var(--text);
 }
+
+/* ---- Bottom panel: terminals, run output, tests, debugger ---- */
+.bottom-panel {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  min-height: 0;
+}
+.panel-resizer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -3px;
+  height: 6px;
+  cursor: row-resize;
+  z-index: 6;
+}
+.panel-resizer:hover {
+  background: var(--accent-line);
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 30px;
+  flex-shrink: 0;
+  padding: 0 6px 0 8px;
+}
+.panel-tab {
+  height: 22px;
+  padding: 0 10px;
+  border-radius: var(--r-sm);
+  color: var(--text-faint);
+  font-size: 11.5px;
+}
+.panel-tab:hover {
+  color: var(--text-dim);
+}
+.panel-tab.on {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.panel-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.panel-empty {
+  margin: auto;
+  color: var(--text-faint);
+  text-align: center;
+  line-height: 1.7;
+}
+.term-view {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.term-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 28px;
+  flex-shrink: 0;
+  padding: 0 6px 0 8px;
+  border-top: 1px solid var(--border-faint);
+  border-bottom: 1px solid var(--border-faint);
+  overflow-x: auto;
+}
+.term-tabs-spacer {
+  flex: 1;
+}
+.term-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 4px 0 8px;
+  border-radius: var(--r-sm);
+  color: var(--text-faint);
+  font-size: 11.5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.term-tab:hover {
+  color: var(--text-dim);
+  background: var(--surface-2);
+}
+.term-tab.active {
+  color: var(--text);
+  background: var(--surface-3);
+}
+.term-tab.ended span:not(.term-dot) {
+  opacity: 0.6;
+}
+.term-tab .tab-close {
+  opacity: 0;
+}
+.term-tab:hover .tab-close,
+.term-tab.active .tab-close {
+  opacity: 1;
+}
+.term-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-faint);
+}
+.term-dot.live {
+  background: var(--add);
+}
+.term-dot.failed {
+  background: var(--del);
+}
+.term-body {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+}
+.term-screen {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 0 0 12px;
+}
+.term-screen .xterm {
+  height: 100%;
+}
+.term-screen .xterm-viewport {
+  background: transparent !important;
+}
+.term-screen .xterm-viewport::-webkit-scrollbar {
+  width: 10px;
+}

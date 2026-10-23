@@ -126,6 +126,18 @@ handlers.git = ({ args }: { args: string[] }) => {
   }
 }
 
+// A pretend shell: echoes what's typed and answers each line with a prompt.
+let nextPty = 1
+const prompt = `\x1b[32mPS\x1b[0m ${ROOT}> `
+const ptyEmit = (id: number, data: string) => void import('@tauri-apps/api/event').then(({ emit }) => emit('pty-output', { id, data }))
+handlers.pty_spawn = (a: { program: string | null; args: string[] }) => {
+  const id = nextPty++
+  const banner = a.program ? `\x1b[90m> ${a.program} ${a.args.join(' ')}\x1b[0m\r\n` : `PowerShell 7.5.0 (preview stand-in)\r\n\r\n${prompt}`
+  setTimeout(() => ptyEmit(id, banner), 50)
+  return id
+}
+handlers.pty_write = (a: { id: number; data: string }) => ptyEmit(a.id, a.data === '\r' ? `\r\n${prompt}` : a.data)
+
 /** Lets later features add their own stand-in commands. */
 export function mockCommand(name: string, handler: (args: any) => unknown) {
   handlers[name] = handler

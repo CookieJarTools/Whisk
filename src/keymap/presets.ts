@@ -21,6 +21,9 @@ const RIDER: Record<string, string[]> = {
   'view.titlebar': ['Ctrl+Alt+T'],
   'view.splitRight': [],
   'view.otherPane': [],
+  'view.terminal': ['Alt+F12'],
+  'view.newTerminal': [],
+  'view.panel': [],
   'git.commit': ['Ctrl+K'],
   'git.push': ['Ctrl+Shift+K'],
   'git.pull': [],
@@ -77,6 +80,7 @@ const SCOPE: Record<string, string[]> = {
   'edit.closeTab': ['Ctrl+W', 'Ctrl+F4'],
   'edit.paramInfo': ['Ctrl+Shift+Space'],
   'view.splitRight': ['Ctrl+\\'],
+  'view.terminal': ['Alt+F12', 'Ctrl+`'],
   'editor.fontUp': ['Ctrl+='],
   'editor.fontDown': ['Ctrl+Shift+-']
 }
@@ -88,6 +92,10 @@ const VSCODE: Record<string, string[]> = {
   'view.explorer': ['Ctrl+B'],
   'view.titlebar': ['Ctrl+Alt+T'],
   'view.splitRight': ['Ctrl+\\'],
+  'view.terminal': ['Ctrl+`'],
+  'view.newTerminal': ['Ctrl+Shift+`'],
+  'view.panel': ['Ctrl+J'],
+  'git.commit': ['Ctrl+Shift+G'],
   'search.everywhere': [DOUBLE_SHIFT, 'Ctrl+T'],
   'search.text': ['Ctrl+Shift+F'],
   'search.find': ['Ctrl+F'],
