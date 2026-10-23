@@ -39,6 +39,8 @@ import { editorTheme } from './theme'
 import { braceFlavor, scopeField, symbolsAt, symbolForActions } from './scopes'
 import { scopeRails } from './scopeRails'
 import { codeLens, lensPath } from './codeLens'
+import { blockFolding } from './folding'
+import { stickyHeader } from './stickyHeader'
 import { allViews, isDirty } from './views'
 import { hasLanguageServer, rename } from './actions'
 import { goToDeclarationOrUsages, showUsagesOf } from './usages'
@@ -62,7 +64,8 @@ function prefExtensions(settings: Settings, braces: BraceFlavor, markdown: boole
   return [
     settings.wordWrap || markdown ? EditorView.lineWrapping : [],
     settings.scopeRails && braces !== 'none' ? scopeRails : [],
-    settings.codeLens ? codeLens : []
+    settings.codeLens ? codeLens : [],
+    settings.stickyHeader && braces !== 'none' ? stickyHeader : []
   ]
 }
 
@@ -76,7 +79,7 @@ useSettings.subscribe((settings, prev) => {
     applyFontSize(settings.editorFontSize)
     allViews().forEach((v) => v.requestMeasure())
   }
-  if (settings.wordWrap === prev.wordWrap && settings.scopeRails === prev.scopeRails && settings.codeLens === prev.codeLens) return
+  if (settings.wordWrap === prev.wordWrap && settings.scopeRails === prev.scopeRails && settings.codeLens === prev.codeLens && settings.stickyHeader === prev.stickyHeader) return
   for (const view of allViews()) {
     const prefs = viewPrefs.get(view)
     if (prefs) view.dispatch({ effects: prefsCompartment.reconfigure(prefExtensions(settings, prefs.braces, prefs.markdown)) })
@@ -137,6 +140,7 @@ export function createEditor(path: string, text: string, parent: HTMLElement): E
     lineNumbers(),
     highlightActiveLineGutter(),
     foldGutter({ openText: '▾', closedText: '▸' }),
+    blockFolding,
     highlightSpecialChars(),
     history(),
     drawSelection(),

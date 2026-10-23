@@ -82,6 +82,9 @@ function Editor() {
       <Row title="Scope rails" hint="Lanes down the left of each block, lit around the cursor">
         <Toggle on={s.scopeRails} onChange={(v) => s.set({ scopeRails: v })} />
       </Row>
+      <Row title="Pin the current class and method" hint="Their headers stay at the top of the editor while you scroll through them">
+        <Toggle on={s.stickyHeader} onChange={(v) => s.set({ stickyHeader: v })} />
+      </Row>
       <Row title="Action row above declarations" hint="Plugin actions like “✦ Ask Claude · + context”">
         <Toggle on={s.codeLens} onChange={(v) => s.set({ codeLens: v })} />
       </Row>

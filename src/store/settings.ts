@@ -33,6 +33,7 @@ export interface Settings {
   autoSaveIdle: boolean
   autoSaveIdleSeconds: number
   formatOnSave: boolean
+  stickyHeader: boolean
 }
 
 interface SettingsStore extends Settings {
@@ -60,7 +61,8 @@ export const DEFAULT_SETTINGS: Settings = {
   autoSaveOnBlur: true,
   autoSaveIdle: true,
   autoSaveIdleSeconds: 15,
-  formatOnSave: false
+  formatOnSave: false,
+  stickyHeader: true
 }
 
 export const FONT_SIZES = { min: 10, max: 20, step: 0.5 }
@@ -87,8 +89,8 @@ function save(settings: Settings) {
 }
 
 function pick(s: SettingsStore): Settings {
-  const { hideTitleBar, hideExplorer, editorFontSize, wordWrap, scopeRails, codeLens, keymapPreset, keyOverrides, customServers, autoUpdate, prereleases, lint, reopenFiles, autoSaveOnBlur, autoSaveIdle, autoSaveIdleSeconds, formatOnSave } = s
-  return { hideTitleBar, hideExplorer, editorFontSize, wordWrap, scopeRails, codeLens, keymapPreset, keyOverrides, customServers, autoUpdate, prereleases, lint, reopenFiles, autoSaveOnBlur, autoSaveIdle, autoSaveIdleSeconds, formatOnSave }
+  const { hideTitleBar, hideExplorer, editorFontSize, wordWrap, scopeRails, codeLens, keymapPreset, keyOverrides, customServers, autoUpdate, prereleases, lint, reopenFiles, autoSaveOnBlur, autoSaveIdle, autoSaveIdleSeconds, formatOnSave, stickyHeader } = s
+  return { hideTitleBar, hideExplorer, editorFontSize, wordWrap, scopeRails, codeLens, keymapPreset, keyOverrides, customServers, autoUpdate, prereleases, lint, reopenFiles, autoSaveOnBlur, autoSaveIdle, autoSaveIdleSeconds, formatOnSave, stickyHeader }
 }
 
 export const useSettings = create<SettingsStore>((set, get) => ({
