@@ -38,7 +38,8 @@ const PATHS = {
   stepOver: 'M4 14a8 8 0 0 1 15-3M19 5v6h-6M11 19a1 1 0 1 0 2 0 1 1 0 0 0-2 0',
   stepInto: 'M12 3v11M8 10l4 4 4-4M11 19a1 1 0 1 0 2 0 1 1 0 0 0-2 0',
   stepOut: 'M12 15V4M8 8l4-4 4 4M11 19a1 1 0 1 0 2 0 1 1 0 0 0-2 0',
-  resume: 'M6 4v16M10 4l10 8-10 8z'
+  resume: 'M6 4v16M10 4l10 8-10 8z',
+  pause: 'M8 5v14M16 5v14'
 }
 
 export type IconName = keyof typeof PATHS

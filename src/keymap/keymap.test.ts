@@ -52,12 +52,15 @@ describe('shortcuts', () => {
 
 describe('presets', () => {
   const known = new Set(BUILT_IN_ACTIONS.map((a) => a.id))
+  const contextual = new Set(BUILT_IN_ACTIONS.filter((a) => a.when).map((a) => a.id))
 
   for (const id of PRESET_ORDER) {
-    it(`${id}: binds only real actions, each key once, in canonical form`, () => {
-      const seen = new Map<string, string>()
+    it(`${id}: binds only real actions, each key once (or once more for a contextual action), in canonical form`, () => {
+      const everyday = new Map<string, string>()
+      const inContext = new Map<string, string>()
       for (const [actionId, keys] of Object.entries(PRESETS[id].bindings)) {
         expect(known.has(actionId), `unknown action ${actionId}`).toBe(true)
+        const seen = contextual.has(actionId) ? inContext : everyday
         for (const k of keys) {
           expect(normalizeShortcut(k)).toBe(k)
           expect(seen.get(k), `${k} bound to both ${seen.get(k)} and ${actionId}`).toBeUndefined()

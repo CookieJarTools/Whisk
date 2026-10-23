@@ -46,6 +46,7 @@ pub fn run() {
             system::refresh_path,
             system::copy_text,
             system::paste_text,
+            system::debuggers_dir,
             git::git,
             pty::pty_spawn,
             pty::pty_write,

@@ -69,8 +69,13 @@ export function resetBindings(actionId?: string) {
   set({ keyOverrides: { ...keyOverrides, [keymapPreset]: forPreset } })
 }
 
+/**
+ * The action a shortcut runs. Contextual actions (stepping while paused in the
+ * debugger) win while they apply; otherwise the key keeps its everyday action.
+ */
 function lookup(shortcut: string): Action | undefined {
-  return allActions().find((a) => bindingsFor(a.id).includes(shortcut))
+  const bound = allActions().filter((a) => bindingsFor(a.id).includes(shortcut))
+  return bound.find((a) => a.when?.()) ?? bound.find((a) => !a.when)
 }
 
 /** Set while the keymap settings page is recording a new shortcut. */

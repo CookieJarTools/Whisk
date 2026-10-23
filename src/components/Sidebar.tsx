@@ -144,7 +144,9 @@ function FileTree({ root }: { root: string }) {
   const listRef = useRef<HTMLDivElement>(null)
 
   // Drop cached listings when the folder changes or the user refreshes.
-  useEffect(() => setListings({}), [root, treeVersion])
+  useEffect(() => {
+    setListings({})
+  }, [root, treeVersion])
 
   // Load any open folder that hasn't been listed yet.
   useEffect(() => {

@@ -42,6 +42,8 @@ import { actionsFor, codeLens, lensPath } from './codeLens'
 import { blockFolding } from './folding'
 import { changeGutter, loadGitBase } from '../git/gutter'
 import { blameExtension } from '../git/blame'
+import { breakpointExtension, showBreakpoints } from '../debug/breakpoints'
+import { debugHover } from '../debug/session'
 import { refreshTerminalFonts } from '../terminal/terminals'
 import { stickyHeader } from './stickyHeader'
 import { allViews, getView, isDirty } from './views'
@@ -162,6 +164,7 @@ export function createEditor(path: string, text: string, parent: HTMLElement): E
 
   const extensions: Extension[] = [
     blameExtension,
+    breakpointExtension,
     lineNumbers(),
     changeGutter,
     highlightActiveLineGutter(),
@@ -203,6 +206,7 @@ export function createEditor(path: string, text: string, parent: HTMLElement): E
     scopeField,
     lensPath.of(path),
     lintExtension,
+    debugHover,
     parameterInfo,
     prefsCompartment.of(prefExtensions(useSettings.getState(), lang.braces, markdown)),
     editorTheme,
@@ -254,5 +258,6 @@ export function createEditor(path: string, text: string, parent: HTMLElement): E
   viewPrefs.set(view, { braces: lang.braces, markdown })
   lang.load().then((support) => view.dispatch({ effects: languageCompartment.reconfigure(support) }))
   void loadGitBase(view, path)
+  showBreakpoints(view)
   return view
 }

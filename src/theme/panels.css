@@ -1832,3 +1832,234 @@
   border-bottom: 1px solid var(--border);
   margin: 0;
 }
+
+/* ---- Breakpoints and the current line ---- */
+.cm-breakpoint-gutter {
+  width: 16px;
+}
+.cm-breakpoint-gutter .cm-gutterElement {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0 !important;
+}
+.cm-breakpoint-gutter .cm-gutterElement:hover:empty::after {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--del);
+  opacity: 0.3;
+}
+.cm-bp {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--del);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+.cm-bp.conditional::after {
+  content: '?';
+  display: block;
+  color: #fff;
+  font-size: 8px;
+  line-height: 10px;
+  text-align: center;
+  font-weight: 700;
+}
+.cm-bp.unverified {
+  background: transparent;
+  border: 1.5px solid var(--del);
+}
+.cm-exec-arrow {
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid var(--warn);
+}
+.cm-breakpoint-gutter .cm-gutterElement:has(.cm-bp) .cm-exec-arrow {
+  display: none;
+}
+.cm-exec-line {
+  background: var(--warn-dim) !important;
+  box-shadow: inset 2px 0 0 var(--warn);
+}
+.cm-debug-hover {
+  padding: 4px 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  max-width: 600px;
+  white-space: pre-wrap;
+}
+.cm-debug-hover-name {
+  color: var(--text-dim);
+}
+
+/* ---- Debug view ---- */
+.dbg-view {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.dbg-view .icon-btn:disabled {
+  opacity: 0.35;
+}
+.dbg-sep {
+  width: 1px;
+  height: 14px;
+  margin: 0 4px;
+  background: var(--border-strong);
+}
+.dbg-stop {
+  color: var(--del);
+}
+.dbg-main {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.3fr) minmax(220px, 1.4fr);
+}
+.dbg-main > * {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  border-right: 1px solid var(--border-faint);
+}
+.dbg-main > :last-child {
+  border-right: none;
+}
+.dbg-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 6px 10px 4px;
+  background: var(--bg);
+  color: var(--text-faint);
+  font-size: 11px;
+}
+.dbg-empty {
+  padding: 6px 12px;
+  color: var(--text-faint);
+  font-size: 11.5px;
+}
+.dbg-frame {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.dbg-frame:hover {
+  background: var(--surface-2);
+}
+.dbg-frame.on {
+  background: var(--accent-dim);
+}
+.dbg-frame.external {
+  opacity: 0.55;
+}
+.dbg-frame-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-dim);
+}
+.dbg-frame-loc {
+  color: var(--text-faint);
+  font-size: 11px;
+}
+.dbg-scope,
+.dbg-var {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 22px;
+  padding: 0 10px 0 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.dbg-scope {
+  color: var(--text-dim);
+  font-weight: 600;
+}
+.dbg-scope:hover,
+.dbg-var:hover {
+  background: var(--surface-2);
+}
+.dbg-var-name {
+  color: var(--lane-1);
+}
+.dbg-var-eq {
+  color: var(--text-faint);
+}
+.dbg-var-value {
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dbg-var-type {
+  margin-left: auto;
+  padding-left: 10px;
+  color: var(--text-faint);
+  font-size: 11px;
+}
+.dbg-console {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+}
+.dbg-console-lines {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.dbg-line {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text-dim);
+}
+.dbg-line.err,
+.dbg-line.error {
+  color: var(--del);
+}
+.dbg-line.info {
+  color: var(--text-faint);
+}
+.dbg-line.input {
+  color: var(--accent-hover);
+}
+.dbg-line.result {
+  color: var(--text);
+}
+.dbg-console-input {
+  flex-shrink: 0;
+  height: 28px;
+  padding: 0 10px;
+  background: var(--surface);
+  border: none;
+  border-top: 1px solid var(--border-faint);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.dbg-console-input:focus {
+  outline: none;
+}
+.launch-field {
+  font-family: var(--font-mono);
+  resize: vertical;
+}
+.launch-field.bad {
+  border-color: var(--del);
+}

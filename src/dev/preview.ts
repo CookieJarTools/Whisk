@@ -149,12 +149,73 @@ handlers.list_dir = (a: { path: string }) =>
 const readFile = handlers.read_text
 handlers.read_text = (a: { path: string }) => (a.path.endsWith('.trx') ? import('../tests/fixtures/xunit.trx?raw').then((m) => m.default) : readFile(a))
 handlers.run_command = (a: { id: number; commandLine: string }) => {
+  const build = a.commandLine.startsWith('dotnet build') || a.commandLine.startsWith('dotnet msbuild')
+  const lines = a.commandLine.startsWith('dotnet msbuild')
+    ? [`${ROOT}${SEP}bin${SEP}Debug${SEP}net10.0${SEP}Sample.dll`]
+    : build
+      ? ['  Sample -> bin/Debug/net10.0/Sample.dll']
+      : ['  Determining projects to restore...', '  Calc.Tests -> bin/Debug/net10.0/Calc.Tests.dll', 'Failed!  - Failed: 1, Passed: 3, Skipped: 1']
   void import('@tauri-apps/api/event').then(async ({ emit }) => {
-    for (const line of ['  Determining projects to restore...', '  Calc.Tests -> bin/Debug/net10.0/Calc.Tests.dll', 'Failed!  - Failed: 1, Passed: 3, Skipped: 1']) {
-      await emit('install-output', { id: a.id, line })
-    }
-    setTimeout(() => void emit('install-exit', { id: a.id, code: 1 }), 300)
+    for (const line of lines) await emit('install-output', { id: a.id, line })
+    setTimeout(() => void emit('install-exit', { id: a.id, code: build ? 0 : 1 }), 300)
   })
+}
+
+// A pretend debug adapter: stops at the first breakpoint in Player.cs with a few variables.
+handlers.which_program = (a: { program: string }) => (a.program === 'netcoredbg' ? 'C:/tools/netcoredbg.exe' : null)
+const dapEmit = (message: object) =>
+  void import('@tauri-apps/api/event').then(({ emit }) => emit('lsp-message', { id: 99, message: JSON.stringify(message) }))
+let dapSeq = 1
+handlers.lsp_start = (a: { command: string }) => (a.command.includes('netcoredbg') ? 99 : 1)
+handlers.lsp_send = (a: { id: number; message: string }) => {
+  if (a.id !== 99) return
+  const req = JSON.parse(a.message)
+  const reply = (body: object = {}) => dapEmit({ seq: dapSeq++, type: 'response', request_seq: req.seq, command: req.command, success: true, body })
+  const event = (name: string, body: object = {}) => dapEmit({ seq: dapSeq++, type: 'event', event: name, body })
+  const line = 13
+  switch (req.command) {
+    case 'initialize':
+      event('initialized')
+      return reply({ supportsConfigurationDoneRequest: true })
+    case 'setBreakpoints':
+      return reply({ breakpoints: req.arguments.breakpoints.map((b: { line: number }, i: number) => ({ id: i + 1, verified: true, line: b.line })) })
+    case 'configurationDone':
+      reply()
+      event('output', { category: 'stdout', output: 'Player spawned\n' })
+      setTimeout(() => event('stopped', { reason: 'breakpoint', threadId: 1 }), 400)
+      return
+    case 'threads':
+      return reply({ threads: [{ id: 1, name: 'Main Thread' }] })
+    case 'stackTrace':
+      return reply({
+        stackFrames: [
+          { id: 1, name: 'Sample.Player.Update()', line, column: 13, source: { path: at('Player.cs') } },
+          { id: 2, name: 'UnityEngine.PlayerLoop.Run()', line: 0, column: 0 }
+        ]
+      })
+    case 'scopes':
+      return reply({ scopes: [{ name: 'Locals', variablesReference: 10 }] })
+    case 'variables':
+      return reply({
+        variables:
+          req.arguments.variablesReference === 10
+            ? [
+                { name: 'this', value: '{Sample.Player}', type: 'Sample.Player', variablesReference: 11 },
+                { name: 'input', value: '{(0.0, 0.0, 1.0)}', type: 'UnityEngine.Vector3', variablesReference: 0 }
+              ]
+            : [
+                { name: 'speed', value: '4', type: 'float', variablesReference: 0 },
+                { name: 'health', value: '100', type: 'int', variablesReference: 0 }
+              ]
+      })
+    case 'evaluate':
+      return reply({ result: req.arguments.expression === 'health' ? '100' : '42' })
+    case 'disconnect':
+      reply()
+      return event('terminated')
+    default:
+      return reply()
+  }
 }
 
 /** Lets later features add their own stand-in commands. */
@@ -181,5 +242,7 @@ await import('../main')
 const { useStore } = await import('../store/store')
 const { allActions } = await import('../keymap/keymap')
 const { getView } = await import('../editor/views')
+const { useRun } = await import('../run/store')
+const { useDebug } = await import('../debug/session')
 // For poking at the interface from the browser console: __preview.run('git.blame').
-;(window as any).__preview = { files, ROOT, at, useStore, getView, run: (id: string) => allActions().find((a) => a.id === id)?.run() }
+;(window as any).__preview = { files, ROOT, at, useStore, useRun, useDebug, getView, run: (id: string) => allActions().find((a) => a.id === id)?.run() }

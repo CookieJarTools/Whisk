@@ -32,9 +32,13 @@ fn tool_dirs() -> Vec<PathBuf> {
     let mut dirs = Vec::new();
     if let Some(home) = std::env::var_os("USERPROFILE").or_else(|| std::env::var_os("HOME")) {
         let home = PathBuf::from(home);
-        for sub in ["go/bin", ".cargo/bin", ".dotnet/tools", ".local/bin", ".bun/bin"] {
+        for sub in ["go/bin", ".cargo/bin", ".dotnet/tools", ".local/bin", ".bun/bin", ".whisk/debuggers/netcoredbg"] {
             dirs.push(home.join(sub));
         }
+    }
+    // LLVM's installer (for lldb-dap) doesn't always add itself to PATH.
+    if let Some(program_files) = std::env::var_os("ProgramFiles") {
+        dirs.push(PathBuf::from(program_files).join("LLVM").join("bin"));
     }
     if let Some(appdata) = std::env::var_os("APPDATA") {
         dirs.push(PathBuf::from(appdata).join("npm"));
@@ -163,6 +167,14 @@ pub fn write_temp(name: String, content: String) -> Result<String, String> {
 #[tauri::command]
 pub fn plugins_dir(app: AppHandle) -> Result<String, String> {
     let dir = app.path().home_dir().map_err(|e| e.to_string())?.join(".whisk").join("plugins");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir.to_string_lossy().to_string())
+}
+
+/// Where Whisk installs debug adapters it downloads: `~/.whisk/debuggers`.
+#[tauri::command]
+pub fn debuggers_dir(app: AppHandle) -> Result<String, String> {
+    let dir = app.path().home_dir().map_err(|e| e.to_string())?.join(".whisk").join("debuggers");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     Ok(dir.to_string_lossy().to_string())
 }

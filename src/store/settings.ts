@@ -1,3 +1,4 @@
+import type { CustomDebugger } from '../debug/adapters'
 import { create } from 'zustand'
 import type { PresetId } from '../keymap/presets'
 import type { CustomServer } from '../lsp/catalogue'
@@ -34,6 +35,7 @@ export interface Settings {
   autoSaveIdleSeconds: number
   formatOnSave: boolean
   stickyHeader: boolean
+  customDebuggers: CustomDebugger[]
 }
 
 interface SettingsStore extends Settings {
@@ -62,7 +64,8 @@ export const DEFAULT_SETTINGS: Settings = {
   autoSaveIdle: true,
   autoSaveIdleSeconds: 15,
   formatOnSave: false,
-  stickyHeader: true
+  stickyHeader: true,
+  customDebuggers: []
 }
 
 export const FONT_SIZES = { min: 10, max: 20, step: 0.5 }
@@ -89,8 +92,8 @@ function save(settings: Settings) {
 }
 
 function pick(s: SettingsStore): Settings {
-  const { hideTitleBar, hideExplorer, editorFontSize, wordWrap, scopeRails, codeLens, keymapPreset, keyOverrides, customServers, autoUpdate, prereleases, lint, reopenFiles, autoSaveOnBlur, autoSaveIdle, autoSaveIdleSeconds, formatOnSave, stickyHeader } = s
-  return { hideTitleBar, hideExplorer, editorFontSize, wordWrap, scopeRails, codeLens, keymapPreset, keyOverrides, customServers, autoUpdate, prereleases, lint, reopenFiles, autoSaveOnBlur, autoSaveIdle, autoSaveIdleSeconds, formatOnSave, stickyHeader }
+  const { hideTitleBar, hideExplorer, editorFontSize, wordWrap, scopeRails, codeLens, keymapPreset, keyOverrides, customServers, autoUpdate, prereleases, lint, reopenFiles, autoSaveOnBlur, autoSaveIdle, autoSaveIdleSeconds, formatOnSave, stickyHeader, customDebuggers } = s
+  return { hideTitleBar, hideExplorer, editorFontSize, wordWrap, scopeRails, codeLens, keymapPreset, keyOverrides, customServers, autoUpdate, prereleases, lint, reopenFiles, autoSaveOnBlur, autoSaveIdle, autoSaveIdleSeconds, formatOnSave, stickyHeader, customDebuggers }
 }
 
 export const useSettings = create<SettingsStore>((set, get) => ({

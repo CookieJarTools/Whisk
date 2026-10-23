@@ -78,7 +78,11 @@ export function KeymapSettings() {
       const actionId = recordingFor!
       setRecordingFor(null)
       if (bindingsFor(actionId).includes(shortcut)) return
-      const conflicts = actionsBoundTo(shortcut, actionId).map((a) => ({ id: a.id, title: a.title }))
+      // A contextual action (stepping while paused) can share a key with an everyday one.
+      const contextual = !!allActions().find((a) => a.id === actionId)?.when
+      const conflicts = actionsBoundTo(shortcut, actionId)
+        .filter((a) => !!a.when === contextual)
+        .map((a) => ({ id: a.id, title: a.title }))
       if (conflicts.length) setPending({ actionId, shortcut, conflicts })
       else setBindings(actionId, [...bindingsFor(actionId), shortcut])
     },

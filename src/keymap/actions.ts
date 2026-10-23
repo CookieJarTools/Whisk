@@ -23,6 +23,8 @@ import { openTerminal } from '../terminal/terminals'
 import { runSelected, stopSelected } from '../run/store'
 import { debugSelected } from '../components/RunWidget'
 import { rerunTests, runTests, useTests } from '../tests/runner'
+import { isDebugging, isPaused, pause, restartDebugging, resume, stepInto, stepOut, stepOver, stopDebugging, useDebug } from '../debug/session'
+import { toggleAtCursor } from '../debug/breakpoints'
 
 /** Something a shortcut can trigger. Plugin commands become actions too (see keymap.ts). */
 export interface Action {
@@ -31,6 +33,8 @@ export interface Action {
   category: string
   /** Only runs (and only claims its keys) when an editor is focused-or-active. */
   editor?: boolean
+  /** Only claims its keys while this is true, and then wins over other actions on the same key. */
+  when?: () => boolean
   run(): void
 }
 
@@ -68,7 +72,15 @@ export const BUILT_IN_ACTIONS: Action[] = [
   { id: 'view.panel', title: 'Show / hide bottom panel', category: 'Layout', run: () => (usePanel.getState().open ? usePanel.getState().close() : usePanel.getState().show(usePanel.getState().view)) },
   { id: 'run.run', title: 'Run', category: 'Run', run: () => void runSelected() },
   { id: 'run.debug', title: 'Debug', category: 'Run', run: () => debugSelected() },
-  { id: 'run.stop', title: 'Stop', category: 'Run', run: () => stopSelected() },
+  { id: 'run.stop', title: 'Stop', category: 'Run', run: () => (isDebugging() ? void stopDebugging() : stopSelected()) },
+  { id: 'debug.toggleBreakpoint', title: 'Toggle breakpoint', category: 'Debug', editor: true, run: onEditor(toggleAtCursor) },
+  { id: 'debug.resume', title: 'Resume', category: 'Debug', when: isPaused, run: resume },
+  { id: 'debug.stepOver', title: 'Step over', category: 'Debug', when: isPaused, run: stepOver },
+  { id: 'debug.stepInto', title: 'Step into', category: 'Debug', when: isPaused, run: stepInto },
+  { id: 'debug.stepOut', title: 'Step out', category: 'Debug', when: isPaused, run: stepOut },
+  { id: 'debug.pause', title: 'Pause', category: 'Debug', when: () => useDebug.getState().state === 'running', run: pause },
+  { id: 'debug.restart', title: 'Restart debugging', category: 'Debug', when: isDebugging, run: () => void restartDebugging() },
+  { id: 'view.debugPanel', title: 'Show / hide Debug', category: 'Layout', run: () => usePanel.getState().toggle('debug') },
   {
     id: 'run.tests',
     title: 'Run all tests',

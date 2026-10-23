@@ -17,6 +17,8 @@ import claudePlugin from './plugins/claude'
 import { testsPlugin } from './tests/plugin'
 import { installRun } from './run/store'
 import { installTests } from './tests/runner'
+import { installBreakpoints } from './debug/breakpoints'
+import { installDebug } from './debug/session'
 import './components/panelViews'
 import { installKeymap } from './keymap/keymap'
 import { isProjectConfig, loadProjectLint } from './lint/project'
@@ -64,6 +66,8 @@ export default function App() {
     installGit()
     installRun()
     installTests()
+    installBreakpoints()
+    installDebug()
     loadPlugins([claudePlugin, testsPlugin])
     ipc.startupArgs().then(async ({ folder, files }) => {
       const store = useStore.getState()

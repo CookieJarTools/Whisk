@@ -16,8 +16,8 @@ export interface RunConfig {
   /** Folder to run in, relative to the project (the project itself when unset). */
   cwd?: string
   env?: Record<string, string>
-  /** How the debugger starts it, when it can (see src/debug). */
-  debug?: { type: DebugType; project?: string; program?: string; args?: string[] }
+  /** How the debugger starts it, when it can: a built-in type or a custom debugger's id (see src/debug). */
+  debug?: { type: DebugType | (string & {}); project?: string; program?: string; args?: string[] }
   source: 'detected' | 'project'
 }
 
