@@ -9,9 +9,10 @@ describe('orderActions', () => {
       { title: 'Organize usings', kind: 'source.organizeImports' },
       { title: 'Generate constructor', kind: 'quickfix', isPreferred: true },
       { title: 'Inline', kind: 'refactor.inline', disabled: { reason: 'nope' } },
-      { title: 'Bare command', command: 'do.it' }
+      { title: 'Bare command', command: 'do.it' },
+      { title: 'Extract local function' }
     ])
-    expect(ordered.map((o) => o.action.title)).toEqual(['Generate constructor', 'Add using', 'Bare command', 'Extract method', 'Organize usings'])
+    expect(ordered.map((o) => o.action.title)).toEqual(['Generate constructor', 'Add using', 'Bare command', 'Extract method', 'Extract local function', 'Organize usings'])
     expect(ordered[2].action.command).toEqual({ title: 'Bare command', command: 'do.it' })
   })
 })

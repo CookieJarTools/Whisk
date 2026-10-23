@@ -54,8 +54,11 @@ export function codeActionCapabilities(): LSPClientExtension {
 
 type Group = 'fix' | 'refactor' | 'source'
 
+/** Some servers (csharp-ls) leave refactorings without a kind, so tell them by name. */
+const REFACTOR_TITLE = /^(Extract|Inline|Introduce|Generate|Convert|Move|Invert|Encapsulate|Pull|Wrap|Split|Merge|Reverse|Use )/
+
 function groupOf(action: CodeAction): Group {
-  const kind = action.kind ?? 'quickfix'
+  const kind = action.kind ?? (REFACTOR_TITLE.test(action.title) ? 'refactor' : 'quickfix')
   if (kind.startsWith('refactor')) return 'refactor'
   if (kind.startsWith('source')) return 'source'
   return 'fix'
