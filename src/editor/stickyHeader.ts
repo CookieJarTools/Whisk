@@ -67,7 +67,7 @@ export const stickyHeader = ViewPlugin.fromClass(
         row.style.setProperty('--lane', `var(--lane-${symbol.block.depth % LANES})`)
         const text = view.state.doc.line(symbol.headerLine).text
         const indent = text.match(/^\s*/)![0]
-        row.style.paddingLeft = `${indent.replace(/\t/g, ' '.repeat(view.state.tabSize)).length}ch`
+        row.style.paddingLeft = `calc(${indent.replace(/\t/g, ' '.repeat(view.state.tabSize)).length}ch + 6px)`
         const body = text.trim()
         const at = body.indexOf(symbol.name)
         if (at >= 0) {

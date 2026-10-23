@@ -12,6 +12,7 @@ import { goToDeclarationOrUsages, showUsagesOf } from '../editor/usages'
 import { goBack, goForward } from '../editor/navigation'
 import { openFind } from '../editor/findBar'
 import { showParameterInfo } from '../editor/signatureHelp'
+import { showQuickFixes } from '../lsp/codeActions'
 import { pickFolder } from '../components/Welcome'
 
 /** Something a shortcut can trigger. Plugin commands become actions too (see keymap.ts). */
@@ -89,6 +90,7 @@ export const BUILT_IN_ACTIONS: Action[] = [
   },
   { id: 'edit.rename', title: 'Rename symbol', category: 'Editing', editor: true, run: onEditor((v) => rename(v) || false) },
   { id: 'edit.suggest', title: 'Show suggestions', category: 'Editing', editor: true, run: onEditor(startCompletion) },
+  { id: 'edit.quickFix', title: 'Quick fixes and refactorings', category: 'Editing', editor: true, run: onEditor(showQuickFixes) },
   { id: 'edit.paramInfo', title: 'Parameter info', category: 'Editing', editor: true, run: onEditor(showParameterInfo) },
   {
     id: 'edit.format',

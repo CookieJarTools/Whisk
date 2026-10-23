@@ -1,5 +1,6 @@
 import { LSPClient, hoverTooltips, serverCompletion } from '@codemirror/lsp-client'
 import { mergedServerDiagnostics, pullDiagnostics } from '../lint/diagnostics'
+import { codeActionCapabilities } from './codeActions'
 import { Compartment } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { ipc } from '../lib/ipc'
@@ -63,7 +64,7 @@ async function start(def: ServerDef, root: string): Promise<Running | null> {
       workspace: (c) => new IdeWorkspace(c),
       // No LSP keymaps: rename, definition, usages and format are keymap actions.
       // Parameter info is Whisk's own (editor/signatureHelp.ts); hover docs show after 150 ms rather than 300.
-      extensions: [serverCompletion(), hoverTooltips({ hoverTime: 150 }), mergedServerDiagnostics()],
+      extensions: [serverCompletion(), hoverTooltips({ hoverTime: 150 }), mergedServerDiagnostics(), codeActionCapabilities()],
       unhandledNotification: (_c, method, params) => {
         if (method === '$/progress' && params?.value?.kind !== 'end') {
           const v = params.value

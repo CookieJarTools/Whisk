@@ -1,6 +1,7 @@
 import { forEachDiagnostic, setDiagnostics, type Diagnostic } from '@codemirror/lint'
 import { ViewPlugin, type EditorView, type ViewUpdate } from '@codemirror/view'
 import { LSPPlugin, type LSPClientExtension } from '@codemirror/lsp-client'
+import type { ServerDiagnostic } from '../lsp/codeActions'
 
 /**
  * Whisk's lint rules and the language server both report problems, but
@@ -34,8 +35,9 @@ const FIRST_PULL_DELAY_MS = 800
 
 type LspPlugin = NonNullable<ReturnType<typeof LSPPlugin.get>>
 
-function toDiagnostic(item: any, plugin: LspPlugin): Diagnostic {
+function toDiagnostic(item: any, plugin: LspPlugin): ServerDiagnostic {
   return {
+    lsp: item,
     from: plugin.unsyncedChanges.mapPos(plugin.fromPosition(item.range.start, plugin.syncedDoc)),
     to: plugin.unsyncedChanges.mapPos(plugin.fromPosition(item.range.end, plugin.syncedDoc)),
     severity: SEVERITY[item.severity ?? 1] ?? 'error',
