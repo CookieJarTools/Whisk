@@ -15,6 +15,9 @@ import { showParameterInfo } from '../editor/signatureHelp'
 import { showQuickFixes } from '../lsp/codeActions'
 import { pickFolder } from '../components/Welcome'
 import { compareWithClipboard, compareWithFile } from '../editor/compare'
+import { gotoChange, showFileDiff } from '../git/gutter'
+import { toggleBlame } from '../git/blame'
+import { pull, push, useGit } from '../git/store'
 
 /** Something a shortcut can trigger. Plugin commands become actions too (see keymap.ts). */
 export interface Action {
@@ -55,6 +58,13 @@ export const BUILT_IN_ACTIONS: Action[] = [
   { id: 'view.otherPane', title: 'Switch to the other side', category: 'Layout', run: () => store().focusPane(store().focusedPane === 1 ? 0 : 1) },
   { id: 'diff.clipboard', title: 'Compare with clipboard', category: 'Editing', run: () => void compareWithClipboard() },
   { id: 'diff.file', title: 'Compare with file…', category: 'Editing', run: () => void compareWithFile() },
+  { id: 'git.commit', title: 'Commit…', category: 'Git', run: () => store().setSideView(store().sideView === 'commit' ? 'files' : 'commit') },
+  { id: 'git.push', title: 'Push', category: 'Git', run: () => void push() },
+  { id: 'git.pull', title: 'Pull', category: 'Git', run: () => void pull() },
+  { id: 'git.blame', title: 'Annotate with git blame', category: 'Git', editor: true, run: onEditor((v) => (void toggleBlame(v), true)) },
+  { id: 'git.diff', title: 'Show changes in this file', category: 'Git', editor: true, run: onEditor((v) => (useGit.getState().repo ? (showFileDiff(v), true) : false)) },
+  { id: 'git.nextChange', title: 'Next change', category: 'Git', editor: true, run: onEditor((v) => gotoChange(v, 1)) },
+  { id: 'git.previousChange', title: 'Previous change', category: 'Git', editor: true, run: onEditor((v) => gotoChange(v, -1)) },
   { id: 'app.settings', title: 'Settings', category: 'General', run: () => store().setSettingsOpen(true) },
   { id: 'app.actions', title: 'Find action', category: 'General', run: () => store().openPalette('actions') },
   { id: 'app.openFolder', title: 'Open folder…', category: 'General', run: pickFolder },

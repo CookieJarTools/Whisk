@@ -30,6 +30,29 @@ export async function saveFile(path: string, { format = false } = {}) {
   }
 }
 
+/**
+ * Shows what's on disk in an open file's editor, after something outside it
+ * changed the file (a git rollback, pull or branch switch). Only the part that
+ * differs is replaced, so the cursor and scroll position stay put.
+ */
+export async function reloadFromDisk(path: string) {
+  const view = getView(path)
+  if (!view) return
+  const text = await ipc.readText(path).catch(() => null)
+  if (text === null) return
+  const next = view.state.toText(text).toString()
+  const current = view.state.doc.toString()
+  if (next !== current) {
+    let start = 0
+    while (start < current.length && start < next.length && current[start] === next[start]) start++
+    let end = 0
+    while (end < current.length - start && end < next.length - start && current[current.length - 1 - end] === next[next.length - 1 - end]) end++
+    view.dispatch({ changes: { from: start, to: current.length - end, insert: next.slice(start, next.length - end) }, userEvent: 'reload' })
+  }
+  markSaved(path, view.state.doc)
+  useStore.getState().setDirty(path, false)
+}
+
 export function hasLanguageServer(view: EditorView): boolean {
   return !!LSPPlugin.get(view)
 }

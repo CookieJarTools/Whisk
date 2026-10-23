@@ -4,6 +4,10 @@ import { joinPath, relativePath, samePath } from '../lib/paths'
 import { languageFor } from '../lib/languages'
 import { useStore } from '../store/store'
 import { Icon, type IconName } from './Icon'
+import { CommitPanel } from './CommitPanel'
+import { useGit } from '../git/store'
+import { repoRelative } from '../git/git'
+import { shortcutLabel } from '../keymap/keymap'
 
 const INDENT = 14
 const BASE_PAD = 10
@@ -161,6 +165,27 @@ function FileTree({ root }: { root: string }) {
   }, [active, root, expandTo])
 
   const rows = useMemo(() => flatten(root, listings, expanded, showHidden), [root, listings, expanded, showHidden])
+
+  // Changed files take their git colour, and folders holding changes a softer one, as in Rider.
+  const repo = useGit((s) => s.repo)
+  const gitFiles = useGit((s) => s.status?.files)
+  const gitMarks = useMemo(() => {
+    const files = new Map<string, string>()
+    const dirs = new Set<string>()
+    for (const f of gitFiles ?? []) {
+      const rel = f.path.toLowerCase()
+      files.set(rel, f.status)
+      for (let i = rel.lastIndexOf('/'); i > 0; i = rel.lastIndexOf('/', i - 1)) dirs.add(rel.slice(0, i))
+    }
+    return { files, dirs }
+  }, [gitFiles])
+  const gitClass = (path: string, isDir: boolean) => {
+    const rel = repo ? repoRelative(repo, path)?.toLowerCase() : null
+    if (!rel) return ''
+    if (isDir) return gitMarks.dirs.has(rel) ? ' git-dir' : ''
+    const status = gitMarks.files.get(rel)
+    return status ? ` git-${status}` : ''
+  }
   const activeParent = active ? active.replace(/[\\/][^\\/]*$/, '') : null
 
   useEffect(() => {
@@ -213,7 +238,7 @@ function FileTree({ root }: { root: string }) {
           <div
             key={entry.path}
             data-path={entry.path}
-            className={`tree-row${entry.is_dir ? ' dir' : ''}${isActive ? ' active' : ''}${focus === entry.path ? ' focused' : ''}`}
+            className={`tree-row${entry.is_dir ? ' dir' : ''}${isActive ? ' active' : ''}${focus === entry.path ? ' focused' : ''}${gitClass(entry.path, entry.is_dir)}`}
             style={{ paddingLeft: BASE_PAD + depth * INDENT }}
             onClick={() => activate(row)}
             title={entry.path}
@@ -272,6 +297,10 @@ export function Sidebar({
   const openPalette = useStore((s) => s.openPalette)
   const [openEditors, setOpenEditors] = useState(true)
   const [files, setFiles] = useState(true)
+  const sideView = useStore((s) => s.sideView)
+  const setSideView = useStore((s) => s.setSideView)
+  const changeCount = useGit((s) => s.status?.files.length ?? 0)
+  const hasRepo = useGit((s) => !!s.repo)
 
   return (
     <aside
@@ -285,6 +314,18 @@ export function Sidebar({
         <span>Go to file…</span>
         <span className="kbd">Ctrl P</span>
       </button>
+      <div className="side-views">
+        <button className={sideView === 'files' ? 'on' : ''} onClick={() => setSideView('files')}>
+          Files
+        </button>
+        <button className={sideView === 'commit' ? 'on' : ''} onClick={() => setSideView('commit')} title={shortcutLabel('git.commit')}>
+          Commit
+          {hasRepo && changeCount > 0 && <span className="side-count">{changeCount}</span>}
+        </button>
+      </div>
+      {sideView === 'commit' ? (
+        <CommitPanel />
+      ) : (
       <div className="side-scroll">
         <Section title="Open editors" count={tabCount} open={openEditors} onToggle={() => setOpenEditors((o) => !o)}>
           <OpenEditors />
@@ -293,6 +334,7 @@ export function Sidebar({
           <FileTree root={root} />
         </Section>
       </div>
+      )}
       <Resizer />
     </aside>
   )

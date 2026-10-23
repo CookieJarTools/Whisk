@@ -76,6 +76,56 @@ const handlers: Record<string, (args: any) => unknown> = {
   check_update: () => null
 }
 
+// A pretend repository: Player.cs has changes since the last commit, tools.py is new.
+const committedPlayer = files[at('Player.cs')]
+  .replace('speed = 4f', 'speed = 3f')
+  .replace('            Debug.Log($"Took {amount}");\n', '')
+  .replace('        private int health = 100;\n', '        private int health = 100;\n        private int armour;\n')
+const H = 'f7a5e68b1da339f36ec3ad2449aa288ca0336dd1'
+handlers.git = ({ args }: { args: string[] }) => {
+  const ok = (stdout: string) => ({ code: 0, stdout, stderr: '' })
+  switch (args[0]) {
+    case 'rev-parse':
+      return ok('C:/Sample\n')
+    case 'status':
+      return ok(
+        [
+          `# branch.oid ${H}`,
+          '# branch.head main',
+          '# branch.upstream origin/main',
+          '# branch.ab +1 -0',
+          `1 .M N... 100644 100644 100644 ${H} ${H} Player.cs`,
+          '? tools.py',
+          ''
+        ].join('\0')
+      )
+    case 'show':
+      return args[1] === 'HEAD:Player.cs' ? ok(committedPlayer) : { code: 128, stdout: '', stderr: 'fatal: path not in HEAD' }
+    case 'branch':
+      return ok('*main\n feature/inventory\n')
+    case 'blame': {
+      const lines = files[at('Player.cs')].split('\n')
+      return ok(
+        lines
+          .map((text, i) => {
+            const old = i % 7 < 4
+            const hash = old ? H : 'a1b2c3d4e5f60718293a4b5c6d7e8f9012345678'
+            return [
+              `${hash} ${i + 1} ${i + 1} 1`,
+              `author ${old ? 'Joseph Cook' : 'Sam Lee'}`,
+              `author-time ${old ? 1760000000 : 1790000000}`,
+              `summary ${old ? 'First pass at the player' : 'Tune movement'}`,
+              `\t${text}`
+            ].join('\n')
+          })
+          .join('\n')
+      )
+    }
+    default:
+      return ok('')
+  }
+}
+
 /** Lets later features add their own stand-in commands. */
 export function mockCommand(name: string, handler: (args: any) => unknown) {
   handlers[name] = handler
@@ -98,4 +148,7 @@ localStorage.setItem(
 
 await import('../main')
 const { useStore } = await import('../store/store')
-;(window as any).__preview = { files, ROOT, useStore }
+const { allActions } = await import('../keymap/keymap')
+const { getView } = await import('../editor/views')
+// For poking at the interface from the browser console: __preview.run('git.blame').
+;(window as any).__preview = { files, ROOT, at, useStore, getView, run: (id: string) => allActions().find((a) => a.id === id)?.run() }

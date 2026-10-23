@@ -7,6 +7,8 @@ import { nextDiagnostic } from '@codemirror/lint'
 import { getView } from '../editor/views'
 import { shortcutLabel } from '../keymap/keymap'
 import { installUpdate, useUpdates } from '../updates/updates'
+import { useGit } from '../git/store'
+import { openBranchMenu } from '../git/menu'
 
 export function StatusBar() {
   const active = useStore((s) => s.active)
@@ -52,6 +54,7 @@ export function StatusBar() {
         </button>
       )}
       <div className="sb-spacer" />
+      <BranchChip />
       {update && (
         <button className="sb-item sb-update" title="Restart Whisk to install the update" onClick={() => installUpdate()}>
           <Icon name="download" size={12} /> Restart to update to {update}
@@ -71,5 +74,26 @@ export function StatusBar() {
         <Icon name="settings" size={12} />
       </button>
     </footer>
+  )
+}
+
+function BranchChip() {
+  const status = useGit((s) => s.status)
+  const busy = useGit((s) => s.busy)
+  if (!status) return null
+  return (
+    <button
+      className="sb-item"
+      title={status.upstream ? `Tracking ${status.upstream}. Click for pull, push and branches.` : 'Click for pull, push and branches.'}
+      onClick={(e) => {
+        const r = e.currentTarget.getBoundingClientRect()
+        void openBranchMenu(r.left, r.top)
+      }}
+    >
+      <Icon name="branch" size={12} />
+      {busy ?? status.branch ?? 'detached'}
+      {!busy && status.ahead > 0 && <span className="sb-ab">↑{status.ahead}</span>}
+      {!busy && status.behind > 0 && <span className="sb-ab">↓{status.behind}</span>}
+    </button>
   )
 }

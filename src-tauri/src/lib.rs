@@ -1,4 +1,5 @@
 mod fs;
+mod git;
 mod lsp;
 mod search;
 mod system;
@@ -42,6 +43,7 @@ pub fn run() {
             system::refresh_path,
             system::copy_text,
             system::paste_text,
+            git::git,
             system::append_log,
         ])
         .run(tauri::generate_context!())

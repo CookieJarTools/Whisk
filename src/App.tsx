@@ -20,6 +20,7 @@ import { onFileSaved } from './editor/actions'
 import { startUpdater } from './updates/updates'
 import { installSessionSaving, restoreSession } from './editor/session'
 import { installAutoSave } from './editor/autoSave'
+import { installGit } from './git/store'
 import { ipc } from './lib/ipc'
 
 /** How long a slid-in bar stays after the mouse leaves it, so brushing past doesn't flicker. */
@@ -56,6 +57,7 @@ export default function App() {
     startUpdater()
     installSessionSaving()
     installAutoSave()
+    installGit()
     loadPlugins([claudePlugin])
     ipc.startupArgs().then(async ({ folder, files }) => {
       const store = useStore.getState()

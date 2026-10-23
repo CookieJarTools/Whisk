@@ -110,6 +110,8 @@ interface State {
   /** Which Settings page to show when it opens. */
   settingsSection: string | null
   wizardOpen: boolean
+  /** What the sidebar shows: the project's files, or the Commit panel. */
+  sideView: 'files' | 'commit'
 
   openFolder(path: string): void
   closeFolder(): void
@@ -138,6 +140,7 @@ interface State {
   setSidebarWidth(width: number): void
   setSettingsOpen(open: boolean, section?: string): void
   setWizardOpen(open: boolean): void
+  setSideView(view: 'files' | 'commit'): void
   expandTo(paths: string[]): void
 }
 
@@ -193,6 +196,7 @@ export const useStore = create<State>((set, get) => ({
   settingsOpen: false,
   settingsSection: null,
   wizardOpen: false,
+  sideView: 'files',
 
   openFolder(rawPath) {
     const path = withoutLongPathPrefix(rawPath)
@@ -308,6 +312,7 @@ export const useStore = create<State>((set, get) => ({
   },
   refreshTree: () => set((s) => ({ treeVersion: s.treeVersion + 1 })),
   setSettingsOpen: (open, section) => set({ settingsOpen: open, settingsSection: section ?? null }),
+  setSideView: (view) => set({ sideView: view }),
   setWizardOpen: (open) => set({ wizardOpen: open }),
   setSidebarWidth(width) {
     saveJson(SIDEBAR_KEY, width)

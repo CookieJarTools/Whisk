@@ -40,6 +40,8 @@ import { braceFlavor, scopeField, symbolsAt, symbolForActions } from './scopes'
 import { scopeRails } from './scopeRails'
 import { codeLens, lensPath } from './codeLens'
 import { blockFolding } from './folding'
+import { changeGutter, loadGitBase } from '../git/gutter'
+import { blameExtension } from '../git/blame'
 import { stickyHeader } from './stickyHeader'
 import { allViews, getView, isDirty } from './views'
 import { hasLanguageServer, rename } from './actions'
@@ -155,7 +157,9 @@ export function createEditor(path: string, text: string, parent: HTMLElement): E
   let mdTimer: number | undefined
 
   const extensions: Extension[] = [
+    blameExtension,
     lineNumbers(),
+    changeGutter,
     highlightActiveLineGutter(),
     foldGutter({ openText: '▾', closedText: '▸' }),
     blockFolding,
@@ -245,5 +249,6 @@ export function createEditor(path: string, text: string, parent: HTMLElement): E
   const view = new EditorView({ state: EditorState.create({ doc: text, extensions }), parent })
   viewPrefs.set(view, { braces: lang.braces, markdown })
   lang.load().then((support) => view.dispatch({ effects: languageCompartment.reconfigure(support) }))
+  void loadGitBase(view, path)
   return view
 }
