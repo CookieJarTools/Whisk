@@ -1,6 +1,6 @@
 # Whisk
 
-Whisk is a small, fast code editor for Windows. It has the parts of a big IDE you actually use every day (suggestions, go to definition, project search, find usages) without the weight. Everything is monospace, the interface stays out of the way, and Claude is one click away from any method or class.
+Whisk is a small, fast code editor for Windows. It has the parts of a big IDE you actually use every day (suggestions, go to definition, project search, find usages, git, a terminal, running, testing and debugging) without the weight. Everything is monospace, the interface stays out of the way, and Claude is one click away from any method or class.
 
 ## Install
 
@@ -25,17 +25,29 @@ Only do this for a file you downloaded from this repo's [Releases page](https://
 
 **Suggestions and navigation.** Code completion, hover docs, errors, go to definition, find usages and rename all come from language servers. Whisk installs them for you (see [Language servers](#language-servers)).
 
+**Quick fixes.** Press Alt+Enter on a problem for the language server's fixes and refactorings, like adding a missing `using`, extracting a method or generating a constructor.
+
 **Search like Rider.** Tap Shift twice to search everything: types, files, methods, actions and text across the whole project. Results update as you type, and text matches show a preview.
 
 **Your shortcuts.** Pick the Whisk, Rider, VS Code or Visual Studio keymap, then change any shortcut you like. Whisk warns you if a key is already taken.
 
 **New projects.** Start a C# app, React + Vite site, Node + TypeScript tool, Rust crate, Python project or Go module from **New project…** in the folder menu. Whisk runs the usual tools (`dotnet new`, `cargo new`…) and opens the result.
 
+**Folding and a pinned header.** Fold any block from the gutter, in any language. As you scroll through a long class, its header and the method you're in stay pinned at the top of the editor.
+
 **Breadcrumbs.** The bar above the editor shows the file and the namespace › class › method you're in, in the same colours as the scope rails.
+
+**Split view and diffs.** Right-click a tab and move it to the other side to see two files at once. Compare a file with the clipboard or another file side by side.
+
+**Git.** Coloured marks in the gutter show what changed since the last commit; click one to see what was there or roll it back. Turn on blame to see who changed each line and when. The **Commit** view in the sidebar lists your changes with a checkbox each, so you can commit just some of them, and push. The branch in the status bar has pull, push and switching branches.
+
+**Terminal.** A real terminal under the editor (Alt+F12), with as many tabs as you like.
+
+**Run, test and debug.** See [below](#run-test-and-debug).
 
 **Markdown.** Edit with a live preview beside it, or on its own.
 
-**Picks up where you left off.** Each project reopens with the tabs you had open and the cursor where you left it. Files save themselves when you switch to another app and after 15 seconds without typing, as in Rider (change or turn this off in **Settings › Editor**).
+**Picks up where you left off.** Each project reopens with the tabs you had open and the cursor where you left it. Files save themselves when you switch to another app and after 15 seconds without typing, as in Rider (change or turn this off in **Settings › Editor**). Turn on **Reformat on save** there to tidy a file with its language server each time you press Ctrl+S.
 
 **Compact layout.** Hide the title bar and the file explorer until you move the mouse to the edge of the window, like Zen browser.
 
@@ -63,8 +75,38 @@ These are the defaults in the Whisk keymap. Change any of them in **Settings ›
 | Ctrl+, | Settings |
 | Ctrl+Alt+C | Compact mode |
 | Ctrl+Alt+S | Show / hide the explorer |
-| F8 / Shift+F8 | Next / previous problem |
+| Alt+Enter | Quick fixes and refactorings |
+| Ctrl+Alt+L | Reformat file |
+| F8 / Shift+F8 | Next / previous problem (step over / out while debugging) |
+| Ctrl+\ | Move the tab to the other side (split) |
+| Alt+F12 or Ctrl+` | Terminal |
+| Ctrl+K / Ctrl+Shift+K | Commit / push |
+| Shift+F10 / Shift+F9 / Ctrl+F2 | Run / debug / stop |
+| Ctrl+F8 | Toggle breakpoint |
+| F9 / F7 | Resume / step into (while debugging) |
 | Ctrl+Alt+A | Ask Claude about the code at the cursor |
+
+## Run, test and debug
+
+**Running.** Pick what to run from the box at the top right and press ▶. Whisk finds the usual things on its own: .NET apps, the scripts in `package.json`, `cargo run`, `go run .` and Python entry points. **Current file** runs whatever file is open (Python, JavaScript, TypeScript, Go, C# and more). Output appears in the **Run** tab at the bottom.
+
+To add your own, or change one Whisk found, choose **Edit configurations…** from the same box. They're saved in `.whisk/run.json`, so you can commit them for your team:
+
+```json
+{
+  "configurations": [
+    { "name": "Server", "command": "npm run dev", "cwd": "web", "env": { "PORT": "3000" } }
+  ]
+}
+```
+
+**Tests.** The **Tests** tab runs your tests and shows the results as a tree: .NET (xUnit, NUnit, MSTest), Vitest, Jest, pytest, `cargo test` and `go test`. Click a failed test to see why; double-click to open it. **▶ Run test** appears above each test method, and above test classes. Unity's own tests aren't supported; use Unity's Test Runner for those.
+
+**Debugging.** Click in the gutter left of the line numbers to set a breakpoint (right-click it to add a condition), then press the bug button. When the program stops you get the call stack, the variables (click to look inside), values when you hover over code, and a console to evaluate expressions.
+
+Debuggers for **C#**, **Python** and **C, C++ and Rust** are built in. Install them with one click in **Settings › Debuggers**. For any other language, click **Add your own** there and enter a debug adapter (anything that speaks the Debug Adapter Protocol), with the launch settings its README lists.
+
+C# debugging works with normal .NET programs (console apps, web apps, tests). It can't attach to Unity; use Rider or Visual Studio for that.
 
 ## Language servers
 
