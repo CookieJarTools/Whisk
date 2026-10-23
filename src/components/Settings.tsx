@@ -85,6 +85,24 @@ function Editor() {
       <Row title="Action row above declarations" hint="Plugin actions like “✦ Ask Claude · + context”">
         <Toggle on={s.codeLens} onChange={(v) => s.set({ codeLens: v })} />
       </Row>
+      <Row title="Reopen files from last time" hint="Each project remembers its open tabs and where the cursor was">
+        <Toggle on={s.reopenFiles} onChange={(v) => s.set({ reopenFiles: v })} />
+      </Row>
+      <Row title="Save when Whisk loses focus" hint="Saves unsaved files when you switch to another app, as Rider does">
+        <Toggle on={s.autoSaveOnBlur} onChange={(v) => s.set({ autoSaveOnBlur: v })} />
+      </Row>
+      <Row title="Save after a pause" hint={`Saves unsaved files after ${s.autoSaveIdleSeconds} seconds without typing`}>
+        <div className="server-controls">
+          {s.autoSaveIdle && (
+            <div className="stepper">
+              <button onClick={() => s.set({ autoSaveIdleSeconds: Math.max(1, s.autoSaveIdleSeconds - 5) })}>−</button>
+              <span>{s.autoSaveIdleSeconds}s</span>
+              <button onClick={() => s.set({ autoSaveIdleSeconds: Math.min(300, s.autoSaveIdleSeconds + 5) })}>+</button>
+            </div>
+          )}
+          <Toggle on={s.autoSaveIdle} onChange={(v) => s.set({ autoSaveIdle: v })} />
+        </div>
+      </Row>
     </>
   )
 }

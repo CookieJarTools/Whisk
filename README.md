@@ -35,6 +35,8 @@ Only do this for a file you downloaded from this repo's [Releases page](https://
 
 **Markdown.** Edit with a live preview beside it, or on its own.
 
+**Picks up where you left off.** Each project reopens with the tabs you had open and the cursor where you left it. Files save themselves when you switch to another app and after 15 seconds without typing, as in Rider (change or turn this off in **Settings › Editor**).
+
 **Compact layout.** Hide the title bar and the file explorer until you move the mouse to the edge of the window, like Zen browser.
 
 **Claude built in.** Send a method or class to Claude with one click (see [Claude](#claude)).

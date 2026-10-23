@@ -25,6 +25,13 @@ export interface Settings {
   prereleases: boolean
   /** Changes to the built-in lint rules; anything unset keeps the rule's default. */
   lint: LintOverrides
+  /** Reopen each project's tabs from last time. */
+  reopenFiles: boolean
+  /** Save unsaved files when Whisk loses focus, like Rider. */
+  autoSaveOnBlur: boolean
+  /** Save unsaved files after this many idle seconds, like Rider. */
+  autoSaveIdle: boolean
+  autoSaveIdleSeconds: number
 }
 
 interface SettingsStore extends Settings {
@@ -47,7 +54,11 @@ export const DEFAULT_SETTINGS: Settings = {
   customServers: [],
   autoUpdate: true,
   prereleases: false,
-  lint: {}
+  lint: {},
+  reopenFiles: true,
+  autoSaveOnBlur: true,
+  autoSaveIdle: true,
+  autoSaveIdleSeconds: 15
 }
 
 export const FONT_SIZES = { min: 10, max: 20, step: 0.5 }
@@ -74,8 +85,8 @@ function save(settings: Settings) {
 }
 
 function pick(s: SettingsStore): Settings {
-  const { hideTitleBar, hideExplorer, editorFontSize, wordWrap, scopeRails, codeLens, keymapPreset, keyOverrides, customServers, autoUpdate, prereleases, lint } = s
-  return { hideTitleBar, hideExplorer, editorFontSize, wordWrap, scopeRails, codeLens, keymapPreset, keyOverrides, customServers, autoUpdate, prereleases, lint }
+  const { hideTitleBar, hideExplorer, editorFontSize, wordWrap, scopeRails, codeLens, keymapPreset, keyOverrides, customServers, autoUpdate, prereleases, lint, reopenFiles, autoSaveOnBlur, autoSaveIdle, autoSaveIdleSeconds } = s
+  return { hideTitleBar, hideExplorer, editorFontSize, wordWrap, scopeRails, codeLens, keymapPreset, keyOverrides, customServers, autoUpdate, prereleases, lint, reopenFiles, autoSaveOnBlur, autoSaveIdle, autoSaveIdleSeconds }
 }
 
 export const useSettings = create<SettingsStore>((set, get) => ({

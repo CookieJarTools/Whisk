@@ -6,7 +6,7 @@ import { EditorSelection, type Text } from '@codemirror/state'
 const views = new Map<string, EditorView>()
 const savedDocs = new Map<string, Text>()
 const waiters = new Map<string, ((view: EditorView) => void)[]>()
-const pendingReveal = new Map<string, number>()
+const pendingReveal = new Map<string, { line: number; col: number; focus: boolean }>()
 
 const key = (path: string) => path.replace(/\\/g, '/').toLowerCase()
 
@@ -16,10 +16,10 @@ export function registerView(path: string, view: EditorView) {
   savedDocs.set(k, view.state.doc)
   waiters.get(k)?.forEach((resolve) => resolve(view))
   waiters.delete(k)
-  const line = pendingReveal.get(k)
-  if (line !== undefined) {
+  const pending = pendingReveal.get(k)
+  if (pending) {
     pendingReveal.delete(k)
-    requestAnimationFrame(() => revealLine(path, line))
+    requestAnimationFrame(() => revealLine(path, pending.line, pending.col, pending.focus))
   }
 }
 
@@ -57,17 +57,22 @@ export function isDirty(path: string, doc: Text): boolean {
   return !!saved && !saved.eq(doc)
 }
 
-/** Moves the cursor to a 1-based line and centres it, now or once the file's view exists. */
-export function revealLine(path: string, line: number) {
+/**
+ * Puts the cursor on a 1-based line and column and centres it, now or once the
+ * file's view exists. `focus: false` leaves keyboard focus where it is, for
+ * tabs restored in the background.
+ */
+export function revealLine(path: string, line: number, col = 0, focus = true) {
   const view = getView(path)
   if (!view) {
-    pendingReveal.set(key(path), line)
+    pendingReveal.set(key(path), { line, col, focus })
     return
   }
   const target = view.state.doc.line(Math.max(1, Math.min(line, view.state.doc.lines)))
+  const pos = Math.min(target.from + Math.max(0, col), target.to)
   view.dispatch({
-    selection: EditorSelection.cursor(target.from),
-    effects: EditorView.scrollIntoView(target.from, { y: 'center' })
+    selection: EditorSelection.cursor(pos),
+    effects: EditorView.scrollIntoView(pos, { y: 'center' })
   })
-  view.focus()
+  if (focus) view.focus()
 }

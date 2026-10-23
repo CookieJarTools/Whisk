@@ -18,6 +18,8 @@ import { installKeymap } from './keymap/keymap'
 import { isProjectConfig, loadProjectLint } from './lint/project'
 import { onFileSaved } from './editor/actions'
 import { startUpdater } from './updates/updates'
+import { installSessionSaving, restoreSession } from './editor/session'
+import { installAutoSave } from './editor/autoSave'
 import { ipc } from './lib/ipc'
 
 /** How long a slid-in bar stays after the mouse leaves it, so brushing past doesn't flicker. */
@@ -52,6 +54,8 @@ export default function App() {
     installKeymap()
     onFileSaved((path) => isProjectConfig(path) && loadProjectLint(useStore.getState().root))
     startUpdater()
+    installSessionSaving()
+    installAutoSave()
     loadPlugins([claudePlugin])
     ipc.startupArgs().then(async ({ folder, files }) => {
       const store = useStore.getState()
@@ -63,6 +67,7 @@ export default function App() {
   // Language servers belong to a folder; switching folders restarts them.
   useEffect(() => {
     loadProjectLint(root)
+    if (root && useStore.getState().tabs.length === 0) void restoreSession(root)
     return () => {
       stopAllServers()
     }
