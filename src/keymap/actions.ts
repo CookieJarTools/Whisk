@@ -20,6 +20,9 @@ import { toggleBlame } from '../git/blame'
 import { pull, push, useGit } from '../git/store'
 import { usePanel } from '../store/panel'
 import { openTerminal } from '../terminal/terminals'
+import { runSelected, stopSelected } from '../run/store'
+import { debugSelected } from '../components/RunWidget'
+import { rerunTests, runTests, useTests } from '../tests/runner'
 
 /** Something a shortcut can trigger. Plugin commands become actions too (see keymap.ts). */
 export interface Action {
@@ -63,6 +66,22 @@ export const BUILT_IN_ACTIONS: Action[] = [
   { id: 'view.terminal', title: 'Show / hide terminal', category: 'Layout', run: () => usePanel.getState().toggle('terminal') },
   { id: 'view.newTerminal', title: 'New terminal', category: 'Layout', run: () => void openTerminal() },
   { id: 'view.panel', title: 'Show / hide bottom panel', category: 'Layout', run: () => (usePanel.getState().open ? usePanel.getState().close() : usePanel.getState().show(usePanel.getState().view)) },
+  { id: 'run.run', title: 'Run', category: 'Run', run: () => void runSelected() },
+  { id: 'run.debug', title: 'Debug', category: 'Run', run: () => debugSelected() },
+  { id: 'run.stop', title: 'Stop', category: 'Run', run: () => stopSelected() },
+  {
+    id: 'run.tests',
+    title: 'Run all tests',
+    category: 'Run',
+    run: () => {
+      const target = useTests.getState().targets[0]
+      if (target) void runTests(target)
+      else store().toast('Whisk didn’t find any tests in this project.')
+    }
+  },
+  { id: 'run.rerunTests', title: 'Run the last tests again', category: 'Run', run: () => void rerunTests() },
+  { id: 'view.runPanel', title: 'Show / hide Run output', category: 'Layout', run: () => usePanel.getState().toggle('run') },
+  { id: 'view.testsPanel', title: 'Show / hide Tests', category: 'Layout', run: () => usePanel.getState().toggle('tests') },
   { id: 'git.commit', title: 'Commit…', category: 'Git', run: () => store().setSideView(store().sideView === 'commit' ? 'files' : 'commit') },
   { id: 'git.push', title: 'Push', category: 'Git', run: () => void push() },
   { id: 'git.pull', title: 'Pull', category: 'Git', run: () => void pull() },

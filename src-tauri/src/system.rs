@@ -204,13 +204,33 @@ struct InstallExit {
     code: Option<i32>,
 }
 
-/// Runs a command line (an install such as `npm install --global pyright`, or a
-/// project template such as `dotnet new console`) through the system shell in
-/// `cwd`, streaming its output as `install-output` events and finishing with
-/// `install-exit`. Only ever called from a button the user pressed.
+/// Process ids of commands started by `run_command`, so they can be stopped.
+static RUNNING: std::sync::Mutex<Option<std::collections::HashMap<u32, u32>>> = std::sync::Mutex::new(None);
+
+/// Streams a pipe line by line, keeping lines that aren't valid UTF-8 (some
+/// tools print in the console's code page) rather than stopping at them.
+fn stream_lines(pipe: impl std::io::Read, mut on_line: impl FnMut(String)) {
+    use std::io::BufRead;
+    let mut reader = std::io::BufReader::new(pipe);
+    let mut buf = Vec::new();
+    loop {
+        buf.clear();
+        match reader.read_until(b'\n', &mut buf) {
+            Ok(0) | Err(_) => break,
+            Ok(_) => {
+                let line = String::from_utf8_lossy(&buf);
+                on_line(line.trim_end_matches(['\r', '\n']).to_string());
+            }
+        }
+    }
+}
+
+/// Runs a command line (an install such as `npm install --global pyright`, a
+/// project template such as `dotnet new console`, or a test run) through the
+/// system shell in `cwd`, streaming its output as `install-output` events and
+/// finishing with `install-exit`. Only ever called from something the user did.
 #[tauri::command]
 pub fn run_command(app: AppHandle, id: u32, command_line: String, cwd: Option<String>) -> Result<(), String> {
-    use std::io::{BufRead, BufReader};
     use std::process::Stdio;
     use tauri::Emitter;
 
@@ -237,23 +257,47 @@ pub fn run_command(app: AppHandle, id: u32, command_line: String, cwd: Option<St
         .stderr(Stdio::piped())
         .spawn()
         .map_err(|e| format!("Couldn't run {command_line}: {e}"))?;
+    RUNNING.lock().unwrap().get_or_insert_with(Default::default).insert(id, child.id());
 
     let stdout = child.stdout.take().ok_or("no stdout")?;
     let stderr = child.stderr.take().ok_or("no stderr")?;
     let err_app = app.clone();
     let err_thread = std::thread::spawn(move || {
-        for line in BufReader::new(stderr).lines().map_while(Result::ok) {
+        stream_lines(stderr, |line| {
             let _ = err_app.emit("install-output", InstallOutput { id, line });
-        }
+        });
     });
     std::thread::spawn(move || {
-        for line in BufReader::new(stdout).lines().map_while(Result::ok) {
+        stream_lines(stdout, |line| {
             let _ = app.emit("install-output", InstallOutput { id, line });
-        }
+        });
         let _ = err_thread.join();
         let code = child.wait().ok().and_then(|s| s.code());
+        if let Some(map) = RUNNING.lock().unwrap().as_mut() {
+            map.remove(&id);
+        }
         let _ = app.emit("install-exit", InstallExit { id, code });
     });
+    Ok(())
+}
+
+/// Stops a command started by `run_command`, with everything it started.
+#[tauri::command]
+pub fn kill_command(id: u32) -> Result<(), String> {
+    let pid = RUNNING.lock().unwrap().as_ref().and_then(|m| m.get(&id).copied());
+    let Some(pid) = pid else { return Ok(()) };
+    #[cfg(windows)]
+    {
+        Command::new("taskkill")
+            .args(["/PID", &pid.to_string(), "/T", "/F"])
+            .creation_flags(CREATE_NO_WINDOW)
+            .output()
+            .map_err(|e| e.to_string())?;
+    }
+    #[cfg(not(windows))]
+    {
+        Command::new("kill").arg(pid.to_string()).output().map_err(|e| e.to_string())?;
+    }
     Ok(())
 }
 

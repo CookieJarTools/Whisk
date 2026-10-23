@@ -49,6 +49,17 @@ fn default_shell() -> String {
     }
 }
 
+fn shell_args(line: &str) -> Vec<String> {
+    #[cfg(windows)]
+    {
+        vec!["-NoLogo".into(), "-NoProfile".into(), "-Command".into(), line.into()]
+    }
+    #[cfg(not(windows))]
+    {
+        vec!["-lc".into(), line.into()]
+    }
+}
+
 /// The longest prefix of `bytes` that is whole UTF-8; the rest waits for the next read.
 fn split_utf8(bytes: &[u8]) -> usize {
     match std::str::from_utf8(bytes) {
@@ -65,6 +76,7 @@ pub fn pty_spawn(
     cwd: String,
     program: Option<String>,
     args: Vec<String>,
+    command_line: Option<String>,
     env: Option<HashMap<String, String>>,
     cols: u16,
     rows: u16,
@@ -72,7 +84,12 @@ pub fn pty_spawn(
     let pair = native_pty_system()
         .openpty(PtySize { rows: rows.max(2), cols: cols.max(10), pixel_width: 0, pixel_height: 0 })
         .map_err(|e| e.to_string())?;
-    let program = program.unwrap_or_else(default_shell);
+    // A command line runs through the shell, so it's written the way you'd type it there.
+    let (program, args) = match (program, command_line) {
+        (_, Some(line)) => (default_shell(), shell_args(&line)),
+        (Some(program), None) => (program, args),
+        (None, None) => (default_shell(), args),
+    };
     let resolved = find_program(&program).map(|p| p.to_string_lossy().into_owned()).unwrap_or(program.clone());
     let mut cmd = CommandBuilder::new(resolved);
     cmd.args(&args);

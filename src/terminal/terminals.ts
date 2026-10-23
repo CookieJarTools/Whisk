@@ -106,6 +106,8 @@ export interface TerminalOptions {
   /** A program to run instead of the shell. */
   program?: string
   args?: string[]
+  /** A command line for the shell to run (instead of an interactive shell). */
+  commandLine?: string
   env?: Record<string, string>
   kind?: TerminalInfo['kind']
   /** Called when the program or shell ends. */
@@ -165,6 +167,7 @@ export async function openTerminal(options: TerminalOptions = {}): Promise<numbe
       cwd: options.cwd ?? useStore.getState().root ?? '.',
       program: options.program ?? null,
       args: options.args ?? [],
+      commandLine: options.commandLine ?? null,
       env: options.env ?? null,
       cols: term.cols,
       rows: term.rows

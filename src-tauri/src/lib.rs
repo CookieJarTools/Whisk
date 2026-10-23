@@ -42,6 +42,7 @@ pub fn run() {
             updates::download_update,
             updates::install_update,
             system::run_command,
+            system::kill_command,
             system::refresh_path,
             system::copy_text,
             system::paste_text,

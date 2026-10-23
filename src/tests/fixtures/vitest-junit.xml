@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="21" failures="0" errors="0" time="0.0186351">
+    <testsuite name="src/lib/fuzzy.test.ts" timestamp="2026-10-23T22:34:30.189Z" hostname="build-pc" tests="4" failures="0" errors="0" skipped="0" time="0.0036405">
+        <testcase classname="src/lib/fuzzy.test.ts" name="fuzzyMatch &gt; matches CamelCase humps" time="0.0019038">
+        </testcase>
+        <testcase classname="src/lib/fuzzy.test.ts" name="fuzzyMatch &gt; rejects out-of-order characters" time="0.0001399">
+        </testcase>
+        <testcase classname="src/lib/fuzzy.test.ts" name="fuzzyMatch &gt; ranks word-start and substring hits above scattered ones" time="0.0002638">
+        </testcase>
+        <testcase classname="src/lib/fuzzy.test.ts" name="fuzzyMatch &gt; prefers shorter texts on ties" time="0.0001533">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/lint/rules.test.ts" timestamp="2026-10-23T22:34:30.194Z" hostname="build-pc" tests="17" failures="0" errors="0" skipped="0" time="0.0149946">
+        <testcase classname="src/lint/rules.test.ts" name="built-in rules &gt; flags trailing whitespace with a fix, but not in Markdown" time="0.0034209">
+        </testcase>
+        <testcase classname="src/lint/rules.test.ts" name="built-in rules &gt; wants a final newline" time="0.0003947">
+        </testcase>
+        <testcase classname="src/lint/rules.test.ts" name="built-in rules &gt; allows two blank lines but not three" time="0.0004002">
+        </testcase>
+        <testcase classname="src/lint/rules.test.ts" name="built-in rules &gt; spots spaces in a tab-indented file, ignoring doc-comment alignment" time="0.0012837">
+        </testcase>
+        <testcase classname="src/lint/rules.test.ts" name="built-in rules &gt; reports nesting deeper than the limit once, at the outermost offending block" time="0.0006525">
+        </testcase>
+        <testcase classname="src/lint/rules.test.ts" name="built-in rules &gt; catches empty catch blocks and except: pass" time="0.0004577">
+        </testcase>
+        <testcase classname="src/lint/rules.test.ts" name="built-in rules &gt; flags TODO notes in comments only" time="0.0005505">
+        </testcase>
+        <testcase classname="src/lint/rules.test.ts" name="built-in rules &gt; leaves debug output alone unless turned on" time="0.0006014">
+        </testcase>
+        <testcase classname="src/lint/rules.test.ts" name="method size rules &gt; counts parameters, keeping generics and defaults together" time="0.0005813">
+        </testcase>
+        <testcase classname="src/lint/rules.test.ts" name="method size rules &gt; reads parameter lists split over several lines" time="0.000364">
+        </testcase>
+        <testcase classname="src/lint/rules.test.ts" name="method size rules &gt; doesn&apos;t count self in Python or Rust" time="0.0006204">
+        </testcase>
+        <testcase classname="src/lint/rules.test.ts" name="method size rules &gt; scores complexity from branches, ignoring comments and strings" time="0.0003362">
+        </testcase>
+        <testcase classname="src/lint/rules.test.ts" name="method size rules &gt; notes very long files" time="0.0027398">
+        </testcase>
+        <testcase classname="src/lint/rules.test.ts" name="configuration &gt; layers user and project settings over the defaults" time="0.0004175">
+        </testcase>
+        <testcase classname="src/lint/rules.test.ts" name="configuration &gt; runs custom regex rules on matching files" time="0.0004596">
+        </testcase>
+        <testcase classname="src/lint/rules.test.ts" name="configuration &gt; skips ignored paths and turns off entirely" time="0.0001957">
+        </testcase>
+        <testcase classname="src/lint/rules.test.ts" name="configuration &gt; matches globs the usual way" time="0.000185">
+        </testcase>
+    </testsuite>
+</testsuites>

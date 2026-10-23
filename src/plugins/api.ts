@@ -45,7 +45,18 @@ export interface SymbolAction {
   title?: string
   /** Which kinds of declaration get this action. Defaults to methods, functions and types. */
   kinds?: SymbolKind[]
+  /** Narrows it further, e.g. to methods with a [Test] attribute. Keep it cheap: it runs as you type. */
+  when?(symbol: SymbolMatch): boolean
   run(symbol: SymbolInfo, ide: IdeApi): void | Promise<void>
+}
+
+/** What `when` gets to decide with. */
+export interface SymbolMatch {
+  name: string
+  kind: SymbolKind
+  path: string
+  /** From the first attribute or doc comment down to the end of the header line. */
+  declaration: string
 }
 
 export interface CommandDef {

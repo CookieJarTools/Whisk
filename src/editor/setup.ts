@@ -38,7 +38,7 @@ import { useStore, type CursorInfo } from '../store/store'
 import { editorTheme } from './theme'
 import { braceFlavor, scopeField, symbolsAt, symbolForActions } from './scopes'
 import { scopeRails } from './scopeRails'
-import { codeLens, lensPath } from './codeLens'
+import { actionsFor, codeLens, lensPath } from './codeLens'
 import { blockFolding } from './folding'
 import { changeGutter, loadGitBase } from '../git/gutter'
 import { blameExtension } from '../git/blame'
@@ -49,7 +49,8 @@ import { hasLanguageServer, rename } from './actions'
 import { goToDeclarationOrUsages, showUsagesOf } from './usages'
 import { lspCompartment } from '../lsp/servers'
 import { toSymbolInfo } from './symbolInfo'
-import { getSymbolActions, ide } from '../plugins/host'
+import { ide } from '../plugins/host'
+import type { SymbolKind } from '../plugins/api'
 import type { MenuItem } from '../store/store'
 
 const MARKDOWN_SYNC_MS = 120
@@ -57,6 +58,9 @@ const MARKDOWN_SYNC_MS = 120
 /** CodeMirror commands that are keymap actions (see keymap/actions.ts), so their built-in keys are dropped. */
 const MANAGED = new Set<unknown>([toggleComment, deleteLine, moveLineUp, moveLineDown, copyLineDown, copyLineUp, startCompletion])
 const EDITING_KEYMAP = defaultKeymap.filter((b) => !MANAGED.has(b.run))
+/** The right-click menu offers actions on every kind of declaration that has any. */
+const ALL_KINDS: SymbolKind[] = ['namespace', 'class', 'struct', 'interface', 'enum', 'record', 'method', 'function', 'property']
+
 const COMPLETION_KEYMAP = completionKeymap.filter((b) => !MANAGED.has(b.run))
 
 /** Parts of each editor that follow user settings, swapped live when settings change. */
@@ -118,9 +122,7 @@ function contextMenu(view: EditorView, path: string, event: MouseEvent) {
   const scope = view.state.field(scopeField, false)
   const symbol = scope && symbolForActions(scope.symbols, view.state.selection.main.head)
   if (symbol) {
-    const actions = getSymbolActions().filter(
-      (a) => !a.kinds || a.kinds.includes(symbol.kind)
-    )
+    const actions = actionsFor(view.state, symbol, ALL_KINDS)
     if (actions.length) {
       items.push({ type: 'divider' }, { type: 'header', label: symbol.name })
       for (const action of actions) {

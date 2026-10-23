@@ -1540,3 +1540,295 @@
 .term-screen .xterm-viewport::-webkit-scrollbar {
   width: 10px;
 }
+
+/* ---- Run widget in the title bar ---- */
+.run-widget {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: 10px;
+}
+.run-pick {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  max-width: 240px;
+  padding: 0 8px 0 10px;
+  border-radius: var(--r-sm);
+  color: var(--text-dim);
+  font-size: 11.5px;
+}
+.run-pick:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.run-pick-label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.run-btn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 24px;
+  border-radius: var(--r-sm);
+}
+.run-btn:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+.run-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.run-btn.run {
+  color: var(--add);
+}
+.run-btn.debug {
+  color: var(--warn);
+}
+.run-btn.stop {
+  color: var(--del);
+}
+
+/* ---- Run configurations dialog ---- */
+.config-dialog {
+  position: fixed;
+  top: 12vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(760px, calc(100vw - 32px));
+  height: min(520px, 76vh);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-pop);
+}
+.config-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.config-list {
+  width: 220px;
+  flex-shrink: 0;
+  overflow: auto;
+  padding: 6px 8px;
+  border-right: 1px solid var(--border);
+}
+.config-group {
+  margin: 10px 6px 4px;
+  color: var(--text-faint);
+  font-size: 11px;
+}
+.config-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: var(--r-sm);
+  color: var(--text-dim);
+  text-align: left;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.config-item:hover {
+  background: var(--surface-2);
+}
+.config-item.on {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.config-item.add,
+.config-item.found {
+  color: var(--text-faint);
+}
+.config-form {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+.config-form label {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--text-dim);
+  font-size: 11.5px;
+}
+.config-form input,
+.config-form textarea {
+  width: 100%;
+  padding: 7px 9px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.config-form input:focus,
+.config-form textarea:focus {
+  outline: none;
+  border-color: var(--accent-line);
+}
+.config-hint {
+  color: var(--text-faint);
+  font-size: 11px;
+}
+.config-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+}
+.config-foot .config-hint {
+  flex: 1;
+}
+
+/* ---- Tests view ---- */
+.tests-view {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.tests-run {
+  height: 22px;
+  padding: 0 8px;
+  font-size: 11.5px;
+}
+.tests-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  color: var(--text-faint);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.tests-filter input {
+  accent-color: var(--accent);
+  margin: 0;
+}
+.tests-summary {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.tests-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.tests-tree {
+  width: 45%;
+  min-width: 220px;
+  overflow: auto;
+  padding: 4px 0;
+  border-right: 1px solid var(--border-faint);
+}
+.tests-suite,
+.tests-case {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px 0 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tests-case {
+  padding-left: 30px;
+}
+.tests-suite:hover,
+.tests-case:hover {
+  background: var(--surface-2);
+}
+.tests-case.on {
+  background: var(--accent-dim);
+}
+.tests-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-dim);
+}
+.tests-suite .tests-name {
+  color: var(--text);
+}
+.tests-time {
+  margin-left: auto;
+  color: var(--text-faint);
+  font-size: 11px;
+}
+.tests-mark {
+  width: 12px;
+  text-align: center;
+}
+.t-passed .tests-mark,
+.t-passed {
+  color: var(--add);
+}
+.t-failed .tests-mark,
+.t-failed {
+  color: var(--del);
+}
+.t-skipped .tests-mark,
+.t-skipped {
+  color: var(--text-faint);
+}
+.tests-detail {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: 8px 14px;
+}
+.tests-detail-head {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.tests-message,
+.tests-stack,
+.tests-log {
+  margin: 0 0 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.tests-message {
+  color: var(--text);
+}
+.tests-stack,
+.tests-log {
+  color: var(--text-dim);
+}
+
+.ctxmenu-item:disabled {
+  opacity: 0.55;
+  cursor: default;
+  background: none;
+}
+.config-dialog .settings-body-head {
+  padding: 0 10px 0 16px;
+  height: 42px;
+  border-bottom: 1px solid var(--border);
+  margin: 0;
+}

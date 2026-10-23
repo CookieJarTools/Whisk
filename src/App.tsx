@@ -14,6 +14,10 @@ import { Welcome } from './components/Welcome'
 import { loadPlugins } from './plugins/host'
 import { stopAllServers } from './lsp/servers'
 import claudePlugin from './plugins/claude'
+import { testsPlugin } from './tests/plugin'
+import { installRun } from './run/store'
+import { installTests } from './tests/runner'
+import './components/panelViews'
 import { installKeymap } from './keymap/keymap'
 import { isProjectConfig, loadProjectLint } from './lint/project'
 import { onFileSaved } from './editor/actions'
@@ -58,7 +62,9 @@ export default function App() {
     installSessionSaving()
     installAutoSave()
     installGit()
-    loadPlugins([claudePlugin])
+    installRun()
+    installTests()
+    loadPlugins([claudePlugin, testsPlugin])
     ipc.startupArgs().then(async ({ folder, files }) => {
       const store = useStore.getState()
       if (folder) store.openFolder(folder)

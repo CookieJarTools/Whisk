@@ -1,7 +1,7 @@
 import { Facet, StateEffect, StateField, type EditorState } from '@codemirror/state'
 import { Decoration, EditorView, WidgetType, type DecorationSet } from '@codemirror/view'
-import type { SymbolAction, SymbolKind } from '../plugins/api'
-import { scopeField } from './scopes'
+import type { SymbolAction, SymbolKind, SymbolMatch } from '../plugins/api'
+import { scopeField, type CodeSymbol } from './scopes'
 import { toSymbolInfo } from './symbolInfo'
 // Circular with host.ts, but only used inside functions, never at module load.
 import { getSymbolActions, ide } from '../plugins/host'
@@ -13,8 +13,20 @@ export const lensPath = Facet.define<string, string>({ combine: (v) => v[0] ?? '
 
 const DEFAULT_KINDS: SymbolKind[] = ['method', 'function', 'class', 'struct', 'interface', 'record']
 
-function actionsFor(kind: SymbolKind): SymbolAction[] {
-  return getSymbolActions().filter((a) => (a.kinds ?? DEFAULT_KINDS).includes(kind))
+/** The actions to offer on a declaration. */
+export function actionsFor(state: EditorState, symbol: CodeSymbol, kinds = DEFAULT_KINDS): SymbolAction[] {
+  let match: SymbolMatch | null = null
+  return getSymbolActions().filter((a) => {
+    if (!(a.kinds ?? kinds).includes(symbol.kind)) return false
+    if (!a.when) return true
+    match ??= {
+      name: symbol.name,
+      kind: symbol.kind,
+      path: state.facet(lensPath),
+      declaration: state.sliceDoc(symbol.from, state.doc.line(symbol.headerLine).to)
+    }
+    return a.when(match)
+  })
 }
 
 class LensWidget extends WidgetType {
@@ -85,7 +97,7 @@ function buildLenses(state: EditorState): DecorationSet {
   if (!scope) return Decoration.none
   const ranges = []
   for (const symbol of scope.symbols) {
-    const actions = actionsFor(symbol.kind)
+    const actions = actionsFor(state, symbol)
     if (actions.length === 0) continue
     const line = state.doc.lineAt(symbol.from)
     const widget = new LensWidget(

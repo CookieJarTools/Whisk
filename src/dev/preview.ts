@@ -138,6 +138,25 @@ handlers.pty_spawn = (a: { program: string | null; args: string[] }) => {
 }
 handlers.pty_write = (a: { id: number; data: string }) => ptyEmit(a.id, a.data === '\r' ? `\r\n${prompt}` : a.data)
 
+// A runnable app, a test project and npm scripts, so the run widget and Tests view have something to show.
+files[at('Sample.csproj')] = '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType></PropertyGroup></Project>'
+files[at('Sample.Tests.csproj')] = '<Project Sdk="Microsoft.NET.Sdk"><ItemGroup><PackageReference Include="Microsoft.NET.Test.Sdk" /></ItemGroup></Project>'
+files[at('package.json')] = JSON.stringify({ scripts: { dev: 'vite', build: 'vite build' } })
+const TEMP = `C:${SEP}Temp${SEP}whisk`
+handlers.write_temp = (a: { name: string }) => TEMP + SEP + a.name
+handlers.list_dir = (a: { path: string }) =>
+  a.path.startsWith(TEMP) ? [{ name: 'whisk_net10.0.trx', path: a.path + SEP + 'whisk_net10.0.trx', is_dir: false }] : listDir(a.path)
+const readFile = handlers.read_text
+handlers.read_text = (a: { path: string }) => (a.path.endsWith('.trx') ? import('../tests/fixtures/xunit.trx?raw').then((m) => m.default) : readFile(a))
+handlers.run_command = (a: { id: number; commandLine: string }) => {
+  void import('@tauri-apps/api/event').then(async ({ emit }) => {
+    for (const line of ['  Determining projects to restore...', '  Calc.Tests -> bin/Debug/net10.0/Calc.Tests.dll', 'Failed!  - Failed: 1, Passed: 3, Skipped: 1']) {
+      await emit('install-output', { id: a.id, line })
+    }
+    setTimeout(() => void emit('install-exit', { id: a.id, code: 1 }), 300)
+  })
+}
+
 /** Lets later features add their own stand-in commands. */
 export function mockCommand(name: string, handler: (args: any) => unknown) {
   handlers[name] = handler

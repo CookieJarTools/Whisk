@@ -1,4 +1,5 @@
 import { getCurrentWindow } from '@tauri-apps/api/window'
+import { RunWidget } from './RunWidget'
 import { useStore, type MenuItem } from '../store/store'
 import { useSettings } from '../store/settings'
 import { baseName, samePath } from '../lib/paths'
@@ -54,6 +55,7 @@ export function TitleBar() {
         <WorkspaceSwitcher />
       </div>
       <div className="tb-spacer" data-tauri-drag-region />
+      <RunWidget />
       <div className="tb-win">
         <button title="Minimise" onClick={() => win.minimize()}>
           <Icon name="winMin" size={13} />

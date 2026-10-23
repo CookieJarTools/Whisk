@@ -6,8 +6,14 @@ let nextId = 1
 /**
  * Runs a shell command line (in `cwd` if given), calling `onLine` for each line
  * of output. Resolves with the exit code, or null if the process couldn't report one.
+ * `onStart` gets the id `ipc.killCommand` takes to stop it.
  */
-export async function runCommand(commandLine: string, onLine: (line: string) => void, cwd?: string): Promise<number | null> {
+export async function runCommand(
+  commandLine: string,
+  onLine: (line: string) => void,
+  cwd?: string,
+  onStart?: (id: number) => void
+): Promise<number | null> {
   const id = nextId++
   let finish: (code: number | null) => void = () => {}
   const exited = new Promise<number | null>((resolve) => (finish = resolve))
@@ -19,6 +25,7 @@ export async function runCommand(commandLine: string, onLine: (line: string) => 
   })
   try {
     await ipc.runCommand(id, commandLine, cwd)
+    onStart?.(id)
     return await exited
   } finally {
     stopOutput()
