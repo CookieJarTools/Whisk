@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "whisk-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--port", "1420"],
+      "port": 1420
+    }
+  ]
+}

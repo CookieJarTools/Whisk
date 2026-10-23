@@ -14,6 +14,47 @@ export interface Tab {
   name: string
   /** Contents when the tab was opened; the live text lives in the tab's EditorView. */
   initialText: string
+  /** Which side of a split it's in (left when unset). */
+  pane?: Pane
+  /** Set for a side-by-side comparison rather than a file. */
+  diff?: DiffSpec
+}
+
+export type Pane = 0 | 1
+
+/** Two texts compared side by side. The right one is a file on disk when `path` is set. */
+export interface DiffSpec {
+  leftTitle: string
+  left: string
+  rightTitle: string
+  right: string
+  path?: string
+}
+
+export const isFileTab = (t: Tab) => !t.diff
+
+/**
+ * Keeps each pane's active tab pointing at a tab in that pane, falls back to
+ * the other pane when the focused one empties, and derives `active`.
+ */
+export function settlePanes(tabs: Tab[], paneActive: [string | null, string | null], focused: Pane) {
+  const settled: [string | null, string | null] = [null, null]
+  for (const p of [0, 1] as Pane[]) {
+    const own = tabs.filter((t) => (t.pane ?? 0) === p)
+    settled[p] = own.some((t) => t.path === paneActive[p]) ? paneActive[p] : (own[0]?.path ?? null)
+  }
+  // The right pane closes when it has nothing left; its neighbour takes over.
+  let focusedPane: Pane = settled[focused] ? focused : focused === 1 ? 0 : 1
+  if (!settled[focusedPane]) focusedPane = 0
+  return { paneActive: settled, focusedPane, active: settled[focusedPane] }
+}
+
+/** The tab next to `path` within its pane, for when it closes. */
+function neighbour(tabs: Tab[], path: string): string | null {
+  const tab = tabs.find((t) => t.path === path)
+  const own = tabs.filter((t) => (t.pane ?? 0) === (tab?.pane ?? 0))
+  const i = own.findIndex((t) => t.path === path)
+  return (own[i + 1] ?? own[i - 1])?.path ?? null
 }
 
 export interface Toast {
@@ -47,7 +88,11 @@ interface State {
   recent: string[]
   expanded: Record<string, boolean>
   tabs: Tab[]
+  /** The focused pane's active tab. */
   active: string | null
+  /** Each pane's active tab; the right one is null when the editor isn't split. */
+  paneActive: [string | null, string | null]
+  focusedPane: Pane
   dirty: Record<string, boolean>
   cursor: CursorInfo | null
   /** Problem counts per open file, from Whisk's rules and the language server. */
@@ -72,6 +117,11 @@ interface State {
   openFile(path: string): Promise<boolean>
   closeTab(path: string): void
   setActive(path: string): void
+  /** Moves a tab to the left or right pane, splitting the editor if needed. */
+  moveToPane(path: string, pane: Pane): void
+  focusPane(pane: Pane): void
+  /** Opens (or replaces) a side-by-side comparison tab. */
+  openDiff(key: string, title: string, spec: DiffSpec): void
   setDirty(path: string, dirty: boolean): void
   setCursor(cursor: CursorInfo | null): void
   setProblems(path: string, problems: Problems): void
@@ -126,6 +176,8 @@ export const useStore = create<State>((set, get) => ({
   expanded: {},
   tabs: [],
   active: null,
+  paneActive: [null, null],
+  focusedPane: 0,
   dirty: {},
   cursor: null,
   problems: {},
@@ -147,12 +199,12 @@ export const useStore = create<State>((set, get) => ({
     const recent = [path, ...get().recent.filter((p) => !samePath(p, path)).map(withoutLongPathPrefix)].slice(0, 8)
     saveJson(RECENT_KEY, recent)
     saveJson(ROOT_KEY, path)
-    set({ root: path, recent, expanded: { [path]: true }, tabs: [], active: null, dirty: {}, cursor: null })
+    set({ root: path, recent, expanded: { [path]: true }, tabs: [], active: null, paneActive: [null, null], focusedPane: 0, dirty: {}, cursor: null })
   },
 
   closeFolder() {
     saveJson(ROOT_KEY, null)
-    set({ root: null, tabs: [], active: null, dirty: {}, cursor: null })
+    set({ root: null, tabs: [], active: null, paneActive: [null, null], focusedPane: 0, dirty: {}, cursor: null })
   },
 
   toggleDir(path) {
@@ -162,17 +214,22 @@ export const useStore = create<State>((set, get) => ({
   async openFile(path) {
     const existing = get().tabs.find((t) => samePath(t.path, path))
     if (existing) {
-      set({ active: existing.path })
+      get().setActive(existing.path)
       return true
     }
     try {
       const text = await ipc.readText(path)
-      const tab: Tab = { path, name: baseName(path), initialText: text }
-      set((s) => ({
-        tabs: [...s.tabs, tab],
-        active: path,
-        markdownText: isMarkdown(path) ? { ...s.markdownText, [path]: text } : s.markdownText
-      }))
+      set((s) => {
+        const tab: Tab = { path, name: baseName(path), initialText: text, pane: s.focusedPane }
+        const paneActive: [string | null, string | null] = [...s.paneActive]
+        paneActive[s.focusedPane] = path
+        const tabs = [...s.tabs, tab]
+        return {
+          tabs,
+          ...settlePanes(tabs, paneActive, s.focusedPane),
+          markdownText: isMarkdown(path) ? { ...s.markdownText, [path]: text } : s.markdownText
+        }
+      })
       return true
     } catch (e) {
       get().toast(String(e), 'error')
@@ -182,16 +239,52 @@ export const useStore = create<State>((set, get) => ({
 
   closeTab(path) {
     set((s) => {
-      const index = s.tabs.findIndex((t) => t.path === path)
+      const tab = s.tabs.find((t) => t.path === path)
+      const paneActive: [string | null, string | null] = [...s.paneActive]
+      const pane = tab?.pane ?? 0
+      if (paneActive[pane] === path) paneActive[pane] = neighbour(s.tabs, path)
       const tabs = s.tabs.filter((t) => t.path !== path)
-      const active = s.active === path ? (tabs[Math.min(index, tabs.length - 1)]?.path ?? null) : s.active
       const dirty = { ...s.dirty }
       delete dirty[path]
-      return { tabs, active, dirty, cursor: active ? s.cursor : null }
+      const settled = settlePanes(tabs, paneActive, s.focusedPane)
+      return { tabs, ...settled, dirty, cursor: settled.active ? s.cursor : null }
     })
   },
 
-  setActive: (path) => set({ active: path }),
+  setActive: (path) =>
+    set((s) => {
+      const pane = s.tabs.find((t) => t.path === path)?.pane ?? 0
+      const paneActive: [string | null, string | null] = [...s.paneActive]
+      paneActive[pane] = path
+      return settlePanes(s.tabs, paneActive, pane)
+    }),
+
+  moveToPane: (path, pane) =>
+    set((s) => {
+      const tab = s.tabs.find((t) => t.path === path)
+      if (!tab || (tab.pane ?? 0) === pane) return s
+      const paneActive: [string | null, string | null] = [...s.paneActive]
+      const from = tab.pane ?? 0
+      if (paneActive[from] === path) paneActive[from] = neighbour(s.tabs, path)
+      paneActive[pane] = path
+      const tabs = s.tabs.map((t) => (t.path === path ? { ...t, pane } : t))
+      return { tabs, ...settlePanes(tabs, paneActive, pane) }
+    }),
+
+  focusPane: (pane) => set((s) => (s.paneActive[pane] ? settlePanes(s.tabs, s.paneActive, pane) : s)),
+
+  openDiff(key, title, spec) {
+    set((s) => {
+      const path = `diff:${key}`
+      const tab: Tab = { path, name: title, initialText: '', diff: spec, pane: s.focusedPane }
+      const exists = s.tabs.some((t) => t.path === path)
+      const tabs = exists ? s.tabs.map((t) => (t.path === path ? { ...tab, pane: t.pane } : t)) : [...s.tabs, tab]
+      const paneActive: [string | null, string | null] = [...s.paneActive]
+      const pane = tabs.find((t) => t.path === path)!.pane ?? 0
+      paneActive[pane] = path
+      return { tabs, ...settlePanes(tabs, paneActive, pane) }
+    })
+  },
   setDirty: (path, dirty) => set((s) => (s.dirty[path] === dirty ? s : { dirty: { ...s.dirty, [path]: dirty } })),
   setCursor: (cursor) => set({ cursor }),
   setProblems: (path, problems) => set((s) => ({ problems: { ...s.problems, [path]: problems } })),

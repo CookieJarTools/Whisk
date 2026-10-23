@@ -19,6 +19,8 @@ const RIDER: Record<string, string[]> = {
   'view.compact': ['Ctrl+Alt+C'],
   'view.explorer': ['Alt+1'],
   'view.titlebar': ['Ctrl+Alt+T'],
+  'view.splitRight': [],
+  'view.otherPane': [],
   'search.everywhere': [DOUBLE_SHIFT, 'Ctrl+T'],
   'search.text': ['Ctrl+Shift+F'],
   'search.find': ['Ctrl+F'],
@@ -67,6 +69,7 @@ const SCOPE: Record<string, string[]> = {
   'nav.forward': ['Ctrl+Alt+Right', 'Alt+Right'],
   'edit.closeTab': ['Ctrl+W', 'Ctrl+F4'],
   'edit.paramInfo': ['Ctrl+Shift+Space'],
+  'view.splitRight': ['Ctrl+\\'],
   'editor.fontUp': ['Ctrl+='],
   'editor.fontDown': ['Ctrl+Shift+-']
 }
@@ -77,6 +80,7 @@ const VSCODE: Record<string, string[]> = {
   'view.compact': ['Ctrl+Alt+C'],
   'view.explorer': ['Ctrl+B'],
   'view.titlebar': ['Ctrl+Alt+T'],
+  'view.splitRight': ['Ctrl+\\'],
   'search.everywhere': [DOUBLE_SHIFT, 'Ctrl+T'],
   'search.text': ['Ctrl+Shift+F'],
   'search.find': ['Ctrl+F'],

@@ -1,6 +1,6 @@
 import { ipc } from '../lib/ipc'
 import { samePath } from '../lib/paths'
-import { useStore } from '../store/store'
+import { isFileTab, useStore, type Tab } from '../store/store'
 import { useSettings } from '../store/settings'
 import { getView, revealLine } from './views'
 
@@ -15,6 +15,8 @@ export interface SavedTab {
   /** 1-based. */
   line: number
   col: number
+  /** Set when it was in the right-hand pane. */
+  pane?: 1
 }
 
 export interface Session {
@@ -29,14 +31,15 @@ const keyFor = (root: string) => `whisk.session.${root.replace(/\\/g, '/').toLow
 /** True while a session is being reopened, so the half-restored tab list isn't saved over it. */
 let restoring = false
 
-function sessionOf(tabs: { path: string }[], active: string | null): Session {
+function sessionOf(tabs: Tab[], active: string | null): Session {
   return {
-    tabs: tabs.map((t) => {
+    tabs: tabs.filter(isFileTab).map((t) => {
+      const pane = t.pane === 1 ? { pane: 1 as const } : {}
       const view = getView(t.path)
-      if (!view) return { path: t.path, line: 1, col: 0 }
+      if (!view) return { path: t.path, line: 1, col: 0, ...pane }
       const head = view.state.selection.main.head
       const line = view.state.doc.lineAt(head)
-      return { path: t.path, line: line.number, col: head - line.from }
+      return { path: t.path, line: line.number, col: head - line.from, ...pane }
     }),
     active
   }
@@ -77,7 +80,9 @@ export async function restoreSession(root: string) {
       if (useStore.getState().root !== root) return
       if ((await ipc.pathState(tab.path)) === 'missing') continue
       const isActive = !!session.active && samePath(tab.path, session.active)
-      if (await store.openFile(tab.path)) revealLine(tab.path, tab.line, tab.col, isActive)
+      if (!(await store.openFile(tab.path))) continue
+      useStore.getState().moveToPane(tab.path, tab.pane ?? 0)
+      revealLine(tab.path, tab.line, tab.col, isActive)
     }
     const active = session.active && useStore.getState().tabs.find((t) => samePath(t.path, session.active!))
     if (active) useStore.getState().setActive(active.path)

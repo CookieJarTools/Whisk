@@ -88,6 +88,7 @@ export const ipc = {
   pluginsDir: () => invoke<string>('plugins_dir'),
   appendLog: (line: string) => invoke<void>('append_log', { line }),
   copyText: (text: string) => invoke<void>('copy_text', { text }),
+  pasteText: () => invoke<string>('paste_text'),
   runCommand: (id: number, commandLine: string, cwd?: string) => invoke<void>('run_command', { id, commandLine, cwd: cwd ?? null }),
   refreshPath: () => invoke<void>('refresh_path'),
   searchProject: (options: SearchOptions) => invoke<SearchResult>('search_project', { options }),

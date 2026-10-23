@@ -14,6 +14,7 @@ import { openFind } from '../editor/findBar'
 import { showParameterInfo } from '../editor/signatureHelp'
 import { showQuickFixes } from '../lsp/codeActions'
 import { pickFolder } from '../components/Welcome'
+import { compareWithClipboard, compareWithFile } from '../editor/compare'
 
 /** Something a shortcut can trigger. Plugin commands become actions too (see keymap.ts). */
 export interface Action {
@@ -41,6 +42,19 @@ export const BUILT_IN_ACTIONS: Action[] = [
   { id: 'view.compact', title: 'Toggle compact mode', category: 'Layout', run: () => settings().toggleCompact() },
   { id: 'view.explorer', title: 'Show / hide explorer', category: 'Layout', run: () => settings().set({ hideExplorer: !settings().hideExplorer }) },
   { id: 'view.titlebar', title: 'Show / hide title bar', category: 'Layout', run: () => settings().set({ hideTitleBar: !settings().hideTitleBar }) },
+  {
+    id: 'view.splitRight',
+    title: 'Move tab to the other side (split)',
+    category: 'Layout',
+    run: () => {
+      const { active, tabs, moveToPane } = store()
+      const tab = tabs.find((t) => t.path === active)
+      if (tab) moveToPane(tab.path, tab.pane === 1 ? 0 : 1)
+    }
+  },
+  { id: 'view.otherPane', title: 'Switch to the other side', category: 'Layout', run: () => store().focusPane(store().focusedPane === 1 ? 0 : 1) },
+  { id: 'diff.clipboard', title: 'Compare with clipboard', category: 'Editing', run: () => void compareWithClipboard() },
+  { id: 'diff.file', title: 'Compare with file…', category: 'Editing', run: () => void compareWithFile() },
   { id: 'app.settings', title: 'Settings', category: 'General', run: () => store().setSettingsOpen(true) },
   { id: 'app.actions', title: 'Find action', category: 'General', run: () => store().openPalette('actions') },
   { id: 'app.openFolder', title: 'Open folder…', category: 'General', run: pickFolder },

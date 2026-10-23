@@ -34,14 +34,14 @@ import { parameterInfo } from './signatureHelp'
 import { shortcutLabel } from '../keymap/keymap'
 import { languageFor, isMarkdown, type BraceFlavor } from '../lib/languages'
 import { useSettings, type Settings } from '../store/settings'
-import { useStore } from '../store/store'
+import { useStore, type CursorInfo } from '../store/store'
 import { editorTheme } from './theme'
 import { braceFlavor, scopeField, symbolsAt, symbolForActions } from './scopes'
 import { scopeRails } from './scopeRails'
 import { codeLens, lensPath } from './codeLens'
 import { blockFolding } from './folding'
 import { stickyHeader } from './stickyHeader'
-import { allViews, isDirty } from './views'
+import { allViews, getView, isDirty } from './views'
 import { hasLanguageServer, rename } from './actions'
 import { goToDeclarationOrUsages, showUsagesOf } from './usages'
 import { lspCompartment } from '../lsp/servers'
@@ -130,6 +130,24 @@ function contextMenu(view: EditorView, path: string, event: MouseEvent) {
   useStore.getState().openMenu(event.clientX, event.clientY, items)
 }
 
+function cursorInfo(state: EditorState): CursorInfo {
+  const head = state.selection.main.head
+  const line = state.doc.lineAt(head)
+  const scope = state.field(scopeField, false)
+  return {
+    line: line.number,
+    col: head - line.from + 1,
+    crumbs: scope ? symbolsAt(scope.symbols, head).map((s) => ({ name: s.name, depth: s.block.depth })) : []
+  }
+}
+
+// Switching tab or pane shows the new editor's position straight away.
+useStore.subscribe((s, prev) => {
+  if (s.active === prev.active || !s.active) return
+  const view = getView(s.active)
+  s.setCursor(view ? cursorInfo(view.state) : null)
+})
+
 export function createEditor(path: string, text: string, parent: HTMLElement): EditorView {
   const lang = languageFor(path)
   const languageCompartment = new Compartment()
@@ -217,15 +235,9 @@ export function createEditor(path: string, text: string, parent: HTMLElement): E
           )
         }
       }
-      if (update.docChanged || update.selectionSet || update.focusChanged) {
-        const head = update.state.selection.main.head
-        const line = update.state.doc.lineAt(head)
-        const scope = update.state.field(scopeField, false)
-        store.setCursor({
-          line: line.number,
-          col: head - line.from + 1,
-          crumbs: scope ? symbolsAt(scope.symbols, head).map((s) => ({ name: s.name, depth: s.block.depth })) : []
-        })
+      // Only the focused pane's editor drives the breadcrumbs and status bar.
+      if ((update.docChanged || update.selectionSet || update.focusChanged) && useStore.getState().active === path) {
+        store.setCursor(cursorInfo(update.state))
       }
     })
   ]

@@ -29,18 +29,23 @@ export const stickyHeader = ViewPlugin.fromClass(
       view.dom.appendChild(this.dom)
       this.onScroll = this.onScroll.bind(this)
       view.scrollDOM.addEventListener('scroll', this.onScroll, { passive: true })
-      requestAnimationFrame(() => this.render())
+      this.schedule()
     }
 
     onScroll() {
-      this.render()
+      this.schedule()
     }
 
     update(update: ViewUpdate) {
-      if (update.docChanged || update.geometryChanged || update.viewportChanged) this.render()
+      if (update.docChanged || update.geometryChanged || update.viewportChanged) this.schedule()
     }
 
-    render() {
+    /** Layout can only be read in CodeMirror's measure phase, so reading and drawing are queued there. */
+    schedule() {
+      this.view.requestMeasure({ key: this, read: () => this.measure(), write: (m) => this.render(m) })
+    }
+
+    measure() {
       const view = this.view
       const info = view.state.field(scopeField, false)
       // Leave room for the pinned lines themselves, so the first line under them counts.
@@ -54,20 +59,26 @@ export const stickyHeader = ViewPlugin.fromClass(
           if (pinned.length <= guess) break
         }
       }
-      const key = pinned.map((s) => s.from).join(',') + '|' + view.contentDOM.getBoundingClientRect().left + '|' + view.scrollDOM.offsetTop
+      const left = view.contentDOM.getBoundingClientRect().left - view.dom.getBoundingClientRect().left
+      return { pinned, left, top: view.scrollDOM.offsetTop }
+    }
+
+    render({ pinned, left, top }: { pinned: CodeSymbol[]; left: number; top: number }) {
+      const view = this.view
+      const key = pinned.map((s) => s.from).join(',') + '|' + left + '|' + top
       if (key === this.key) return
       this.key = key
       this.dom.replaceChildren()
       this.dom.style.display = pinned.length ? '' : 'none'
-      this.dom.style.top = `${view.scrollDOM.offsetTop}px`
-      this.dom.style.left = `${view.contentDOM.getBoundingClientRect().left - view.dom.getBoundingClientRect().left}px`
+      this.dom.style.top = `${top}px`
+      this.dom.style.setProperty('--content-left', `${left}px`)
       for (const symbol of pinned) {
         const row = document.createElement('div')
         row.className = 'cm-sticky-line'
         row.style.setProperty('--lane', `var(--lane-${symbol.block.depth % LANES})`)
         const text = view.state.doc.line(symbol.headerLine).text
         const indent = text.match(/^\s*/)![0]
-        row.style.paddingLeft = `calc(${indent.replace(/\t/g, ' '.repeat(view.state.tabSize)).length}ch + 6px)`
+        row.style.paddingLeft = `calc(var(--content-left) + ${indent.replace(/\t/g, ' '.repeat(view.state.tabSize)).length}ch + 6px)`
         const body = text.trim()
         const at = body.indexOf(symbol.name)
         if (at >= 0) {
@@ -77,6 +88,10 @@ export const stickyHeader = ViewPlugin.fromClass(
           name.textContent = symbol.name
           row.append(name, body.slice(at + symbol.name.length))
         } else row.textContent = body
+        const num = document.createElement('span')
+        num.className = 'cm-sticky-num'
+        num.textContent = String(symbol.headerLine)
+        row.prepend(num)
         row.title = `Line ${symbol.headerLine}`
         row.onmousedown = (e) => {
           e.preventDefault()

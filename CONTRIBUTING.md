@@ -16,6 +16,7 @@ npm run tauri dev -- -- -- <folder> [file…]
 - `npm test` runs the unit tests.
 - `npm run typecheck` checks the TypeScript.
 - `cargo test --manifest-path src-tauri/Cargo.toml` runs the Rust tests.
+- `npx vite`, then open http://localhost:1420/preview.html, runs the interface in a browser with a stand-in backend and a sample project ([src/dev/preview.ts](src/dev/preview.ts)). Handy for checking layout without building the app.
 
 ## Where things are
 
