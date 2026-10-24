@@ -10,6 +10,7 @@ import { openTerminal } from '../terminal/terminals'
 import { DapClient } from './dap'
 import { adapterFor, customDebuggerFor } from './adapters'
 import { fileKey, setExecLine, useBreakpoints } from './breakpoints'
+import { valueTree } from './valueTree'
 
 /**
  * The debug session: starts the adapter for a run configuration, sends it the
@@ -134,10 +135,17 @@ async function loadScopes(frameId: number) {
 }
 
 export async function loadChildren(ref: number) {
-  if (!client || ref <= 0 || useDebug.getState().children[ref]) return
+  await variablesOf(ref)
+}
+
+/** A value's members, fetched once per stop (references only last until the program runs on). */
+export async function variablesOf(ref: number): Promise<Variable[]> {
+  const cached = useDebug.getState().children[ref]
+  if (cached || !client || ref <= 0) return cached ?? []
   const body = await client.request('variables', { variablesReference: ref }).catch(() => ({ variables: [] }))
   const vars: Variable[] = (body.variables ?? []).map((v: any) => ({ name: v.name, value: v.value, type: v.type, variablesReference: v.variablesReference ?? 0 }))
   useDebug.setState((s) => ({ children: { ...s.children, [ref]: vars } }))
+  return vars
 }
 
 export async function selectFrame(frame: Frame) {
@@ -371,6 +379,7 @@ export const debugHover = hoverTooltip(async (view: EditorView, pos: number) => 
     .request('evaluate', { expression, frameId: useDebug.getState().frameId ?? undefined, context: 'hover' })
     .catch(() => null)
   if (!body?.result) return null
+  const root: Variable = { name: expression, value: body.result, type: body.type, variablesReference: body.variablesReference ?? 0 }
   return {
     pos: from,
     end: word.to,
@@ -378,10 +387,7 @@ export const debugHover = hoverTooltip(async (view: EditorView, pos: number) => 
     create() {
       const dom = document.createElement('div')
       dom.className = 'cm-debug-hover'
-      const name = document.createElement('span')
-      name.className = 'cm-debug-hover-name'
-      name.textContent = `${expression} = `
-      dom.append(name, body.result)
+      dom.append(valueTree(root, variablesOf))
       return { dom }
     }
   }

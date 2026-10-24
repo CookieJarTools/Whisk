@@ -201,21 +201,32 @@ handlers.lsp_send = (a: { id: number; message: string }) => {
       })
     case 'scopes':
       return reply({ scopes: [{ name: 'Locals', variablesReference: 10 }] })
-    case 'variables':
-      return reply({
-        variables:
-          req.arguments.variablesReference === 10
-            ? [
-                { name: 'this', value: '{Sample.Player}', type: 'Sample.Player', variablesReference: 11 },
-                { name: 'input', value: '{(0.0, 0.0, 1.0)}', type: 'UnityEngine.Vector3', variablesReference: 0 }
-              ]
-            : [
-                { name: 'speed', value: '4', type: 'float', variablesReference: 0 },
-                { name: 'health', value: '100', type: 'int', variablesReference: 0 }
-              ]
-      })
+    case 'variables': {
+      const ref = req.arguments.variablesReference
+      const kids: Record<number, object[]> = {
+        10: [
+          { name: 'this', value: '{Sample.Player}', type: 'Sample.Player', variablesReference: 11 },
+          { name: 'input', value: '{(0.0, 0.0, 1.0)}', type: 'UnityEngine.Vector3', variablesReference: 0 }
+        ],
+        11: [
+          { name: 'speed', value: '4', type: 'float', variablesReference: 0 },
+          { name: 'health', value: '100', type: 'int', variablesReference: 0 },
+          { name: 'name', value: '"Ranged(Clone)"', type: 'string', variablesReference: 0 },
+          { name: 'team', value: '{Heirloom.Combat.Team}', type: 'Heirloom.Combat.Team', variablesReference: 12 },
+          { name: 'grudges', value: 'null', type: 'List<Combatant>', variablesReference: 0 },
+          { name: 'isActiveAndEnabled', value: 'true', type: 'bool', variablesReference: 0 }
+        ],
+        12: [
+          { name: 'Id', value: '2', type: 'int', variablesReference: 0 },
+          { name: 'Name', value: '"Raiders"', type: 'string', variablesReference: 0 }
+        ]
+      }
+      return reply({ variables: kids[ref] ?? [] })
+    }
     case 'evaluate':
-      return reply({ result: req.arguments.expression === 'health' ? '100' : '42' })
+      return req.arguments.expression === 'health'
+        ? reply({ result: '100', type: 'int', variablesReference: 0 })
+        : reply({ result: '{Ranged(Clone) (Heirloom.Combat.Combatant)}', type: 'Heirloom.Combat.Combatant', variablesReference: 11 })
     case 'disconnect':
       reply()
       return event('terminated')
