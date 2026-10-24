@@ -314,7 +314,9 @@ export async function stopDebugging() {
   if (!client) return endSession()
   const c = client
   // Ask nicely, but don't wait long for an adapter that's stuck.
-  await Promise.race([c.request('disconnect', { terminateDebuggee: true }).catch(() => {}), new Promise((r) => setTimeout(r, 2000))])
+  // Attached sessions (Unity) detach; anything Whisk started is ended.
+  const terminateDebuggee = !adapterFor(useDebug.getState().config?.debug?.type ?? '')?.attach
+  await Promise.race([c.request('disconnect', { terminateDebuggee }).catch(() => {}), new Promise((r) => setTimeout(r, 2000))])
   await endSession()
 }
 

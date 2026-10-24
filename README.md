@@ -106,7 +106,19 @@ To add your own, or change one Whisk found, choose **Edit configurations…** fr
 
 Debuggers for **C#**, **Python** and **C, C++ and Rust** are built in. Install them with one click in **Settings › Debuggers**. For any other language, click **Add your own** there and enter a debug adapter (anything that speaks the Debug Adapter Protocol), with the launch settings its README lists.
 
-C# debugging works with normal .NET programs (console apps, web apps, tests). It can't attach to Unity; use Rider or Visual Studio for that.
+C# debugging works with normal .NET programs (console apps, web apps, tests), and with Unity (below).
+
+## Unity
+
+Open a Unity project in Whisk and click **Set up Unity** in the bar that appears. That's all:
+
+- Whisk becomes Unity's script editor. Double-click a script or a console error in Unity and it opens in Whisk at that line, in the window you already have open.
+- Whisk's C# support (suggestions, errors, go to definition) works across all your assemblies.
+- To debug, pick **Unity Editor** in the box at the top and press the bug button while the project is open in Unity. Whisk switches Unity to Debug mode for the session and attaches. Set breakpoints, press Play, and Whisk stops on them. Stop detaches and leaves Unity running.
+
+Set-up adds a small package to the project (`Packages/com.cookiejar.ide.whisk`). Commit it and your team gets the same set-up. Unity's script editor choice is per computer, so each person picks Whisk once (the bar in Whisk does it for them, or **Preferences › External Tools** in Unity).
+
+Debugging works in the editor with the Mono scripting backend, which is what the editor always uses. Built players and IL2CPP builds can't be debugged from Whisk yet.
 
 ## Language servers
 
@@ -255,3 +267,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how the code is laid out and how rele
 ## License
 
 [PolyForm Shield 1.0.0](LICENSE.md). Use Whisk for anything you like; just don't use it to build a competing editor.
+
+Whisk includes the [Unity debug adapter](https://github.com/walcht/unity-dap) by Walid Chtioui (MIT License), built from source when Whisk is built. Its licence is installed next to it.

@@ -12,6 +12,7 @@ import { Icon } from './Icon'
 import { ErrorBoundary } from './ErrorBoundary'
 import { fileIcon } from './Sidebar'
 import { BottomPanel } from './BottomPanel'
+import { UnityBanner } from './UnityPanels'
 
 const NO_CRUMBS: CursorInfo['crumbs'] = []
 const LANES = 12
@@ -203,6 +204,7 @@ export function EditorArea() {
 
   return (
     <main className="main">
+      <UnityBanner />
       <div className={`panes${split ? ' split' : ''}`} style={{ gridTemplateColumns: columns }}>
         {panes.map((p) => (
           <TabBar key={`bar${p}`} pane={p} split={split} />

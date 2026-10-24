@@ -55,7 +55,12 @@ export function RunWidget() {
         <span className="run-pick-label">{label}</span>
         <Icon name="chevronDown" size={11} strokeWidth={2} />
       </button>
-      <button className="run-btn run" title={`Run ${shortcutLabel('run.run')}`} disabled={!config} onClick={() => void runSelected()}>
+      <button
+        className="run-btn run"
+        title={config && !config.command ? 'This one is for debugging only' : `Run ${shortcutLabel('run.run')}`}
+        disabled={!config?.command}
+        onClick={() => void runSelected()}
+      >
         <Icon name="play" size={12} />
       </button>
       <button

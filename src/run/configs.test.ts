@@ -24,6 +24,12 @@ describe('detectConfigs', () => {
     expect(configs.map((c) => c.command)).toEqual(['pnpm run dev', 'pnpm run build', 'pnpm run lint'])
   })
 
+  it('offers attaching to the Unity editor in a Unity project', async () => {
+    const files = { 'ProjectSettings/ProjectVersion.txt': 'm_EditorVersion: 6000.4.4f1', 'Assets/Player.cs': '' }
+    const configs = await detectConfigs(Object.keys(files), reader(files))
+    expect(configs).toEqual([{ id: 'unity:editor', name: 'Unity Editor', command: '', debug: { type: 'unity' }, source: 'detected' }])
+  })
+
   it('knows Cargo, Go and Python entry points', async () => {
     const files = { 'Cargo.toml': '', 'go.mod': '', 'main.py': '' }
     const names = (await detectConfigs(Object.keys(files), reader(files))).map((c) => c.command)

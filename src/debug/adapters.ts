@@ -3,6 +3,7 @@ import { baseName, joinPath } from '../lib/paths'
 import { runCommand } from '../lib/runCommand'
 import { useSettings } from '../store/settings'
 import type { RunConfig } from '../run/configs'
+import { debuggerPort, editorInstance, PACKAGE_NAME } from '../unity/unity'
 
 /**
  * Debug adapters: the per-language programs that do the actual debugging,
@@ -42,6 +43,10 @@ export interface AdapterDef {
   resolve(): Promise<{ command: string; args: string[] } | null>
   /** Builds what's needed and returns the DAP `launch` arguments. */
   prepare(config: RunConfig, ctx: AdapterContext): Promise<Record<string, unknown>>
+  /** Attaches to something already running (Unity), so stopping detaches rather than ends it. */
+  attach?: boolean
+  /** Ships with Whisk, so there's nothing to install. */
+  bundled?: boolean
 }
 
 const isAbsolute = (p: string) => /^([A-Za-z]:[\\/]|\/)/.test(p)
@@ -155,7 +160,49 @@ const lldb: AdapterDef = {
   }
 }
 
-export const BUILT_IN_ADAPTERS: AdapterDef[] = [coreclr, python, lldb]
+const READY_TIMEOUT_MS = 120_000
+
+/** Waits for the Whisk package in Unity to finish switching to Debug mode (a script recompile). */
+async function waitForDebugMode(root: string, ctx: AdapterContext) {
+  const folder = joinPath(joinPath(root, 'Library'), 'Whisk')
+  const ready = joinPath(folder, 'debug-ready')
+  await ipc.removeFile(ready)
+  await ipc.writeText(joinPath(folder, 'debug-request'), new Date().toISOString())
+  ctx.log('Asking Unity to get ready for the debugger (it may recompile scripts once)…')
+  const started = Date.now()
+  while (Date.now() - started < READY_TIMEOUT_MS) {
+    if ((await ipc.pathState(ready)) !== 'missing') {
+      await ipc.removeFile(ready)
+      return
+    }
+    await new Promise((r) => setTimeout(r, 400))
+  }
+  // Unity may be busy or unfocused; attach anyway and let Unity ask about Debug mode itself.
+  ctx.log('Unity didn’t answer, so attaching anyway. If Unity asks, choose to enable debugging.')
+}
+
+const unity: AdapterDef = {
+  type: 'unity',
+  label: 'Unity debugger',
+  languages: 'C# in the Unity editor',
+  homepage: 'https://github.com/walcht/unity-dap',
+  attach: true,
+  bundled: true,
+  async resolve() {
+    const exe = await ipc.bundledPath('debuggers/unity/unity-debug-adapter.exe')
+    return (await ipc.pathState(exe)) === 'missing' ? null : { command: exe, args: [] }
+  },
+  async prepare(_config, ctx) {
+    const instance = await editorInstance(ctx.root)
+    if (!instance) throw new Error('Open this project in Unity first, then press Debug again.')
+    if ((await ipc.pathState(joinPath(joinPath(ctx.root, 'Packages'), PACKAGE_NAME))) !== 'missing') await waitForDebugMode(ctx.root, ctx)
+    const port = debuggerPort(instance.processId)
+    ctx.log(`Attaching to Unity ${instance.version} (process ${instance.processId}, port ${port})`)
+    return { request: 'attach', address: '127.0.0.1', port }
+  }
+}
+
+export const BUILT_IN_ADAPTERS: AdapterDef[] = [coreclr, unity, python, lldb]
 
 /** Fills ${file}, ${fileDirname} and ${workspaceFolder} in a custom debugger's launch JSON. */
 export function fillLaunch(template: string, vars: { file: string; root: string }): Record<string, unknown> {

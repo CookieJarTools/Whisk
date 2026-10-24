@@ -11,7 +11,7 @@ export type DebugType = 'coreclr' | 'python' | 'node' | 'lldb' | 'go'
 export interface RunConfig {
   id: string
   name: string
-  /** The command line, run through the shell in `cwd`. */
+  /** The command line, run through the shell in `cwd`. Empty for debug-only ones (attaching to Unity). */
   command: string
   /** Folder to run in, relative to the project (the project itself when unset). */
   cwd?: string
@@ -62,6 +62,10 @@ const FIRST_SCRIPTS = ['dev', 'start', 'serve', 'build', 'test']
 export async function detectConfigs(files: string[], read: Read): Promise<RunConfig[]> {
   const set = new Set(files)
   const configs: RunConfig[] = []
+  // A Unity project is debugged by attaching to the editor that has it open; there's nothing to run.
+  if (set.has('ProjectSettings/ProjectVersion.txt')) {
+    configs.push({ id: 'unity:editor', name: 'Unity Editor', command: '', debug: { type: 'unity' }, source: 'detected' })
+  }
   const shallow = (rel: string, depth: number) => rel.split('/').length <= depth + 1 && !rel.includes('node_modules/')
 
   for (const rel of files.filter((f) => f.endsWith('.csproj') && shallow(f, 4))) {

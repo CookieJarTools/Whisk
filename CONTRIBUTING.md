@@ -30,6 +30,9 @@ npm run tauri dev -- -- -- <folder> [file…]
 | `src/run` | Run configurations: finding them, `.whisk/run.json`, running them |
 | `src/tests` | The test runner and the report parsers (TRX, JUnit, Jest, cargo, go), with real reports in `fixtures` |
 | `src/debug` | The Debug Adapter Protocol client, adapters, breakpoints and the debug session |
+| `src/unity` | Spotting Unity projects, installing the Unity package, finding the editor to debug |
+| `unity/com.cookiejar.ide.whisk` | The Unity package Whisk installs into projects (C#, Cookie Jar house style) |
+| `scripts/build-unity-debugger.mjs` | Builds the bundled Unity debug adapter from a pinned commit; runs before every build (needs git and the .NET SDK) |
 | `src/lint` | Whisk's lint rules (`rules.ts`), their config and the project `.whisk/lint.json`, and merging with language-server errors |
 | `src/keymap` | Actions, keymap presets and the shortcut handler |
 | `src/plugins` | The plugin API and host, and the Claude plugin |

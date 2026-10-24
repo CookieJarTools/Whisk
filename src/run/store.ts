@@ -109,6 +109,7 @@ export async function runConfig(config: RunConfig) {
 
 export function runSelected() {
   const config = selectedConfig()
+  if (config && !config.command) return useStore.getState().toast(`“${config.name}” is for debugging: press the bug button.`)
   if (config) return runConfig(config)
   useStore.getState().toast(useRun.getState().selected === 'current-file' ? 'Whisk doesn’t know how to run this kind of file. Add a configuration for it.' : 'Pick something to run first.')
 }

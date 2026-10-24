@@ -10,7 +10,8 @@
     "tauri": "tauri",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "release": "node scripts/release.mjs"
+    "release": "node scripts/release.mjs",
+    "unity-debugger": "node scripts/build-unity-debugger.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.4",

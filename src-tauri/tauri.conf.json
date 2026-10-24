@@ -4,9 +4,9 @@
   "version": "0.1.1",
   "identifier": "com.cookiejar.whisk",
   "build": {
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "npm run unity-debugger && npm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "npm run unity-debugger && npm run build",
     "frontendDist": "../dist"
   },
   "app": {
@@ -38,6 +38,10 @@
       "icons/icon.ico"
     ],
     "createUpdaterArtifacts": true,
+    "resources": {
+      "../unity/com.cookiejar.ide.whisk": "unity/com.cookiejar.ide.whisk",
+      "resources/unity-debugger": "debuggers/unity"
+    },
     "publisher": "CookieJarTools",
     "homepage": "https://github.com/CookieJarTools/Whisk",
     "shortDescription": "A small, fast code editor",

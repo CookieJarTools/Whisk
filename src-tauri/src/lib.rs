@@ -10,6 +10,16 @@ mod walk;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // A second launch (from Unity, or a file opened in Explorer) goes to the open window instead.
+        .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
+            use tauri::{Emitter, Manager};
+            let args = system::parse_args(argv.into_iter().skip(1), std::path::Path::new(&cwd));
+            let _ = app.emit("open-args", args);
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.unminimize();
+                let _ = window.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
@@ -47,6 +57,9 @@ pub fn run() {
             system::copy_text,
             system::paste_text,
             system::debuggers_dir,
+            system::bundled_path,
+            system::copy_dir,
+            system::remove_file,
             git::git,
             pty::pty_spawn,
             pty::pty_write,

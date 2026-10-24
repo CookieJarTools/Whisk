@@ -2063,3 +2063,29 @@
 .launch-field.bad {
   border-color: var(--del);
 }
+
+/* ---- Unity set-up banner ---- */
+.unity-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  padding: 7px 12px 7px 14px;
+  background: var(--accent-dim);
+  border-bottom: 1px solid var(--accent-line);
+  color: var(--text-dim);
+  font-size: 12px;
+}
+.unity-banner > span {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.45;
+}
+.unity-banner > svg {
+  color: var(--accent-hover);
+  flex-shrink: 0;
+}
+.unity-banner .btn {
+  height: 24px;
+  white-space: nowrap;
+}

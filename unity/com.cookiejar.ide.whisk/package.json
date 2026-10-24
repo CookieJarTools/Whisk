@@ -1,0 +1,9 @@
+{
+  "name": "com.cookiejar.ide.whisk",
+  "displayName": "Whisk Editor",
+  "version": "1.0.0",
+  "unity": "2021.3",
+  "description": "Makes Whisk available as Unity's script editor: opens scripts at the right line, writes the .csproj and .sln files Whisk's C# support reads, and gets the editor ready when Whisk attaches its debugger.",
+  "author": { "name": "CookieJarTools", "url": "https://github.com/CookieJarTools/Whisk" },
+  "keywords": ["ide", "editor", "whisk"]
+}

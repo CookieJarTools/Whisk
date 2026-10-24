@@ -179,29 +179,114 @@ pub fn debuggers_dir(app: AppHandle) -> Result<String, String> {
     Ok(dir.to_string_lossy().to_string())
 }
 
-#[derive(serde::Serialize)]
-pub struct StartupArgs {
-    folder: Option<String>,
-    files: Vec<String>,
+/// Where a file that ships with Whisk lives (the Unity package, the Unity debugger).
+#[tauri::command]
+pub fn bundled_path(app: AppHandle, name: String) -> Result<String, String> {
+    let path = app.path().resource_dir().map_err(|e| e.to_string())?.join(name);
+    Ok(path.to_string_lossy().trim_start_matches(r"\\?\").to_string())
 }
 
-/// `scope <folder> [file…]` opens the folder, then the files, like `code .` does.
+/// Deletes one file (not folders). Missing files are fine.
 #[tauri::command]
-pub fn startup_args() -> StartupArgs {
+pub fn remove_file(path: String) -> Result<(), String> {
+    match std::fs::remove_file(&path) {
+        Err(e) if e.kind() != std::io::ErrorKind::NotFound => Err(e.to_string()),
+        _ => Ok(()),
+    }
+}
+
+/// Copies a folder and everything in it, replacing what's at `to`.
+#[tauri::command]
+pub fn copy_dir(from: String, to: String) -> Result<(), String> {
+    fn copy(from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()> {
+        std::fs::create_dir_all(to)?;
+        for entry in std::fs::read_dir(from)? {
+            let entry = entry?;
+            let target = to.join(entry.file_name());
+            if entry.file_type()?.is_dir() {
+                copy(&entry.path(), &target)?;
+            } else {
+                std::fs::copy(entry.path(), target)?;
+            }
+        }
+        Ok(())
+    }
+    copy(std::path::Path::new(&from), std::path::Path::new(&to)).map_err(|e| e.to_string())
+}
+
+#[derive(Clone, serde::Serialize)]
+pub struct FileArg {
+    path: String,
+    /// 1-based; 0 when not given.
+    line: u32,
+    col: u32,
+}
+
+#[derive(Clone, serde::Serialize)]
+pub struct StartupArgs {
+    folder: Option<String>,
+    files: Vec<FileArg>,
+}
+
+/// Splits `F:\Game\Player.cs:42:7` into the path and its line and column.
+/// Drive letters are colons too, so only trailing numbers count.
+fn split_position(arg: &str) -> (&str, u32, u32) {
+    let mut rest = arg;
+    let mut numbers = Vec::new();
+    while numbers.len() < 2 {
+        match rest.rsplit_once(':') {
+            Some((head, tail)) if !tail.is_empty() && tail.chars().all(|c| c.is_ascii_digit()) && head.len() > 1 => {
+                numbers.push(tail.parse().unwrap_or(0));
+                rest = head;
+            }
+            _ => break,
+        }
+    }
+    match numbers.as_slice() {
+        [line] => (rest, *line, 0),
+        [col, line] => (rest, *line, *col),
+        _ => (arg, 0, 0),
+    }
+}
+
+/// `whisk <folder> [file[:line[:col]]…]` opens the folder, then the files, like `code .` does.
+/// Relative paths are taken from `cwd`.
+pub fn parse_args(args: impl IntoIterator<Item = String>, cwd: &std::path::Path) -> StartupArgs {
     let mut folder = None;
     let mut files = Vec::new();
-    for arg in std::env::args().skip(1) {
-        let path = std::path::Path::new(&arg);
-        let Ok(full) = std::fs::canonicalize(path) else { continue };
+    for arg in args {
+        let (raw, line, col) = split_position(&arg);
+        let path = cwd.join(raw);
+        let Ok(full) = std::fs::canonicalize(&path) else { continue };
         // canonicalize() returns Windows long-path form (`\\?\F:\…`); editors and language servers want `F:\…`.
         let full = full.to_string_lossy().trim_start_matches(r"\\?\").to_string();
         if path.is_dir() && folder.is_none() {
             folder = Some(full);
         } else if path.is_file() {
-            files.push(full);
+            files.push(FileArg { path: full, line, col });
         }
     }
     StartupArgs { folder, files }
+}
+
+#[tauri::command]
+pub fn startup_args() -> StartupArgs {
+    let cwd = std::env::current_dir().unwrap_or_default();
+    parse_args(std::env::args().skip(1), &cwd)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::split_position;
+
+    #[test]
+    fn reads_line_and_column_after_a_path() {
+        assert_eq!(split_position(r"F:\Game\Player.cs:42:7"), (r"F:\Game\Player.cs", 42, 7));
+        assert_eq!(split_position(r"F:\Game\Player.cs:42"), (r"F:\Game\Player.cs", 42, 0));
+        assert_eq!(split_position(r"F:\Game\Player.cs"), (r"F:\Game\Player.cs", 0, 0));
+        assert_eq!(split_position(r"F:\Game"), (r"F:\Game", 0, 0));
+        assert_eq!(split_position("src/main.rs:3"), ("src/main.rs", 3, 0));
+    }
 }
 
 #[derive(Clone, serde::Serialize)]

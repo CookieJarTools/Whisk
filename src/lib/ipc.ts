@@ -1,5 +1,11 @@
 import { invoke } from '@tauri-apps/api/core'
 
+/** What Whisk was asked to open on the command line; line and col are 1-based, 0 when not given. */
+export interface OpenArgs {
+  folder: string | null
+  files: { path: string; line: number; col: number }[]
+}
+
 export interface DirEntry {
   name: string
   path: string
@@ -87,6 +93,9 @@ export const ipc = {
   writeTemp: (name: string, content: string) => invoke<string>('write_temp', { name, content }),
   pluginsDir: () => invoke<string>('plugins_dir'),
   debuggersDir: () => invoke<string>('debuggers_dir'),
+  bundledPath: (name: string) => invoke<string>('bundled_path', { name }),
+  copyDir: (from: string, to: string) => invoke<void>('copy_dir', { from, to }),
+  removeFile: (path: string) => invoke<void>('remove_file', { path }),
   appendLog: (line: string) => invoke<void>('append_log', { line }),
   copyText: (text: string) => invoke<void>('copy_text', { text }),
   pasteText: () => invoke<string>('paste_text'),
@@ -99,5 +108,5 @@ export const ipc = {
   checkUpdate: (tag?: string) => invoke<UpdateInfo | null>('check_update', { tag: tag ?? null }),
   downloadUpdate: () => invoke<void>('download_update'),
   installUpdate: () => invoke<void>('install_update'),
-  startupArgs: () => invoke<{ folder: string | null; files: string[] }>('startup_args')
+  startupArgs: () => invoke<OpenArgs>('startup_args')
 }

@@ -1,0 +1,14 @@
+{
+  "name": "CookieJarTools.Whisk.Editor",
+  "rootNamespace": "CookieJarTools.Whisk.Editor",
+  "references": [],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

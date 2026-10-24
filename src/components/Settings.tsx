@@ -6,11 +6,12 @@ import { KeymapSettings } from './KeymapSettings'
 import { UpdatesSettings } from './UpdatesSettings'
 import { LinterSettings } from './LinterSettings'
 import { DebuggerSettings } from './DebuggerSettings'
+import { UnitySettings } from './UnityPanels'
 import { shortcutLabel } from '../keymap/keymap'
 import { ide, openPluginsFolder, usePlugins } from '../plugins/host'
 import { Icon } from './Icon'
 
-type Section = 'layout' | 'editor' | 'keymap' | 'linter' | 'claude' | 'languages' | 'debuggers' | 'plugins' | 'updates'
+type Section = 'layout' | 'editor' | 'keymap' | 'linter' | 'claude' | 'languages' | 'debuggers' | 'unity' | 'plugins' | 'updates'
 
 const SECTIONS: { id: Section; label: string }[] = [
   { id: 'layout', label: 'Layout' },
@@ -20,6 +21,7 @@ const SECTIONS: { id: Section; label: string }[] = [
   { id: 'claude', label: 'Claude' },
   { id: 'languages', label: 'Language servers' },
   { id: 'debuggers', label: 'Debuggers' },
+  { id: 'unity', label: 'Unity' },
   { id: 'plugins', label: 'Plugins' },
   { id: 'updates', label: 'Updates' }
 ]
@@ -161,6 +163,7 @@ const BODIES: Record<Section, () => ReactNode> = {
   linter: LinterSettings,
   languages: LanguageServers,
   debuggers: DebuggerSettings,
+  unity: UnitySettings,
   plugins: Plugins,
   updates: UpdatesSettings
 }

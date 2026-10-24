@@ -112,6 +112,7 @@ export function DebuggerSettings() {
   }
 
   const controls = (a: AdapterDef) => {
+    if (a.bundled) return <span className="set-badge ok">Comes with Whisk</span>
     if (installing[a.type] && !failed[a.type]) return <span className="set-badge">Installing…</span>
     if (ready[a.type]) return <span className="set-badge ok">Installed</span>
     if (ready[a.type] === undefined) return <span className="set-badge">Checking…</span>
@@ -137,7 +138,7 @@ export function DebuggerSettings() {
       </p>
       <div className="set-toolbar">
         <div className="set-hint" style={{ flex: 1 }}>
-          Built in: C#, Python, and C, C++ and Rust. Add any other debugger that speaks the Debug Adapter Protocol.
+          Built in: C#, Unity, Python, and C, C++ and Rust. Add any other debugger that speaks the Debug Adapter Protocol.
         </div>
         <button className="btn" onClick={() => setAdding((a) => !a)}>
           <Icon name="plus" size={13} /> Add your own

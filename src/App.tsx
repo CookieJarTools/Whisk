@@ -27,7 +27,8 @@ import { startUpdater } from './updates/updates'
 import { installSessionSaving, restoreSession } from './editor/session'
 import { installAutoSave } from './editor/autoSave'
 import { installGit } from './git/store'
-import { ipc } from './lib/ipc'
+import { installOpenArgs } from './lib/openArgs'
+import { installUnity } from './unity/unity'
 
 /** How long a slid-in bar stays after the mouse leaves it, so brushing past doesn't flicker. */
 const PEEK_LINGER_MS = 350
@@ -69,11 +70,8 @@ export default function App() {
     installBreakpoints()
     installDebug()
     loadPlugins([claudePlugin, testsPlugin])
-    ipc.startupArgs().then(async ({ folder, files }) => {
-      const store = useStore.getState()
-      if (folder) store.openFolder(folder)
-      for (const file of files) await store.openFile(file)
-    })
+    installUnity()
+    installOpenArgs()
   }, [])
 
   // Language servers belong to a folder; switching folders restarts them.

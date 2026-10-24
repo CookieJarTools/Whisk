@@ -62,7 +62,7 @@ const handlers: Record<string, (args: any) => unknown> = {
   list_dir: (a) => listDir(a.path),
   read_text: (a) => files[a.path] ?? '',
   write_text: (a) => void (files[a.path] = a.content),
-  path_state: (a) => (files[a.path] !== undefined || a.path === ROOT ? 'used' : 'missing'),
+  path_state: (a) => (files[a.path] !== undefined || a.path === ROOT || Object.keys(files).some((f) => f.startsWith(a.path + SEP)) ? 'used' : 'missing'),
   list_files: () => Object.keys(files),
   find_type_definitions: () => [],
   search_project: () => ({ matches: [], truncated: false }),
@@ -137,6 +137,12 @@ handlers.pty_spawn = (a: { program: string | null; args: string[] }) => {
   return id
 }
 handlers.pty_write = (a: { id: number; data: string }) => ptyEmit(a.id, a.data === '\r' ? `\r\n${prompt}` : a.data)
+
+// It's a Unity project too, so the Unity set-up banner shows.
+files[at(`ProjectSettings${SEP}ProjectVersion.txt`)] = 'm_EditorVersion: 6000.4.4f1\n'
+files[at(`Assets${SEP}Readme.txt`)] = 'Assets\n'
+handlers.bundled_path = (a: { name: string }) => `C:${SEP}Program Files${SEP}Whisk${SEP}${a.name}`
+handlers.copy_dir = (a: { to: string }) => void (files[a.to + SEP + 'package.json'] = JSON.stringify({ version: '1.0.0' }))
 
 // A runnable app, a test project and npm scripts, so the run widget and Tests view have something to show.
 files[at('Sample.csproj')] = '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType></PropertyGroup></Project>'
