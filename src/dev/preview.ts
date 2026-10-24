@@ -214,7 +214,9 @@ handlers.lsp_send = (a: { id: number; message: string }) => {
           { name: 'name', value: '"Ranged(Clone)"', type: 'string', variablesReference: 0 },
           { name: 'team', value: '{Heirloom.Combat.Team}', type: 'Heirloom.Combat.Team', variablesReference: 12 },
           { name: 'grudges', value: 'null', type: 'List<Combatant>', variablesReference: 0 },
-          { name: 'isActiveAndEnabled', value: 'true', type: 'bool', variablesReference: 0 }
+          { name: 'isActiveAndEnabled', value: 'true', type: 'bool', variablesReference: 0 },
+          // Enough members to need scrolling, like a real Unity component.
+          ...Array.from({ length: 30 }, (_, i) => ({ name: `field${i}`, value: String(i), type: 'int', variablesReference: 0 }))
         ],
         12: [
           { name: 'Id', value: '2', type: 'int', variablesReference: 0 },

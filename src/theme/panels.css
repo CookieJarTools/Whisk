@@ -1901,6 +1901,11 @@
 .cm-tooltip-hover:has(.cm-debug-hover) .cm-lsp-hover-tooltip {
   display: none;
 }
+/* The value tree scrolls itself; the hover box around it mustn't add a second scrollbar. */
+.cm-editor .cm-tooltip.cm-tooltip-hover:has(.cm-debug-hover) {
+  max-height: none !important;
+  overflow: hidden !important;
+}
 .dbg-tree-row {
   display: flex;
   align-items: baseline;
