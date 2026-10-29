@@ -24,6 +24,10 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .setup(|app| {
+            system::record_install_path(app.handle());
+            Ok(())
+        })
         .manage(updates::UpdateState::default())
         .manage(lsp::LspState::default())
         .manage(pty::PtyState::default())

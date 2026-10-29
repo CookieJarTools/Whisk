@@ -130,13 +130,16 @@ namespace CookieJarTools.Whisk.Editor.Projects
 			xml.AppendLine($"    <{name}>{Escape(value)}</{name}>");
 		}
 
-		/// <summary>Paths inside the project are written relative to it, so the files work on every machine.</summary>
+		/// <summary>
+		/// Paths inside the project are written relative to it, so the files work on every machine, and
+		/// with the separators of the system Unity is running on.
+		/// </summary>
 		private static string Relative(string root, string path)
 		{
 			var full = Path.GetFullPath(Path.IsPathRooted(path) ? path : Path.Combine(root, path));
 			var prefix = root.TrimEnd('\\', '/') + Path.DirectorySeparatorChar;
 			var inside = full.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
-			return (inside ? full.Substring(prefix.Length) : full).Replace('/', '\\');
+			return (inside ? full.Substring(prefix.Length) : full).Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 		}
 
 		private static string Escape(string text)

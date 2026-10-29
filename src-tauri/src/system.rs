@@ -213,6 +213,21 @@ pub fn plugins_dir(app: AppHandle) -> Result<String, String> {
     Ok(dir.to_string_lossy().to_string())
 }
 
+/// Writes where this copy of Whisk is to `~/.whisk/install-path`, which is how the Unity
+/// package finds it on Linux (on Windows the installer records it in the registry). An
+/// AppImage can live anywhere, so this happens on every start. Development builds leave
+/// it alone, so they don't take over from the installed Whisk.
+pub fn record_install_path(app: &AppHandle) {
+    if cfg!(windows) || cfg!(debug_assertions) {
+        return;
+    }
+    let exe = std::env::var_os("APPIMAGE").map(PathBuf::from).or_else(|| std::env::current_exe().ok());
+    let (Some(exe), Ok(home)) = (exe, app.path().home_dir()) else { return };
+    let dir = home.join(".whisk");
+    let _ = std::fs::create_dir_all(&dir);
+    let _ = std::fs::write(dir.join("install-path"), exe.to_string_lossy().as_bytes());
+}
+
 /// Where Whisk installs debug adapters it downloads: `~/.whisk/debuggers`.
 #[tauri::command]
 pub fn debuggers_dir(app: AppHandle) -> Result<String, String> {

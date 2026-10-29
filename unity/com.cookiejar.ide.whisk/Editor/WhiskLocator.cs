@@ -1,12 +1,15 @@
 using System;
 using System.IO;
 using Microsoft.Win32;
+using UnityEngine;
 
 namespace CookieJarTools.Whisk.Editor
 {
 	/// <summary>
-	/// Finds where Whisk is installed. The installer records its folder in the registry; the
-	/// default install folder is the fallback for copies installed before it did.
+	/// Finds where Whisk is installed. On Windows the installer records its folder in the registry, and
+	/// the default install folder is the fallback for copies installed before it did. On Linux an AppImage
+	/// can live anywhere, so Whisk writes its own path to ~/.whisk/install-path each time it starts, and
+	/// the place the .deb and .rpm packages install it is the fallback.
 	/// </summary>
 	public static class WhiskLocator
 	{
@@ -14,8 +17,34 @@ namespace CookieJarTools.Whisk.Editor
 
 		private const string InstallKey = @"Software\CookieJarTools\Whisk";
 
-		/// <summary>The full path to whisk.exe, or null when Whisk is not installed.</summary>
+		private const string LinuxName = "whisk";
+
+		private const string LinuxPackagePath = "/usr/bin/whisk";
+
+		/// <summary>The full path to Whisk, or null when Whisk is not installed.</summary>
 		public static string Find()
+		{
+			return Application.platform == RuntimePlatform.WindowsEditor ? FindOnWindows() : FindOnLinux();
+		}
+
+		public static bool IsWhisk(string path)
+		{
+			if (string.IsNullOrEmpty(path))
+			{
+				return false;
+			}
+
+			var name = Path.GetFileName(path);
+			return string.Equals(name, ExeName, StringComparison.OrdinalIgnoreCase) || name == LinuxName || IsAppImage(name);
+		}
+
+		/// <summary>An AppImage keeps the name it was downloaded with, such as Whisk_0.3.0_amd64.AppImage, even after it updates.</summary>
+		private static bool IsAppImage(string name)
+		{
+			return name.StartsWith("Whisk", StringComparison.OrdinalIgnoreCase) && name.EndsWith(".AppImage", StringComparison.OrdinalIgnoreCase);
+		}
+
+		private static string FindOnWindows()
 		{
 			var fromRegistry = FromRegistry();
 			if (fromRegistry != null)
@@ -27,9 +56,15 @@ namespace CookieJarTools.Whisk.Editor
 			return File.Exists(local) ? local : null;
 		}
 
-		public static bool IsWhisk(string path)
+		private static string FindOnLinux()
 		{
-			return !string.IsNullOrEmpty(path) && string.Equals(Path.GetFileName(path), ExeName, StringComparison.OrdinalIgnoreCase);
+			var recorded = FromRecordedPath();
+			if (recorded != null)
+			{
+				return recorded;
+			}
+
+			return File.Exists(LinuxPackagePath) ? LinuxPackagePath : null;
 		}
 
 		private static string FromRegistry()
@@ -46,6 +81,21 @@ namespace CookieJarTools.Whisk.Editor
 			catch (Exception)
 			{
 				// No registry on this platform, or no permission: fall back to the default folder.
+				return null;
+			}
+		}
+
+		private static string FromRecordedPath()
+		{
+			var record = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".whisk", "install-path");
+			try
+			{
+				var path = File.Exists(record) ? File.ReadAllText(record).Trim() : null;
+				return !string.IsNullOrEmpty(path) && File.Exists(path) ? path : null;
+			}
+			catch (IOException)
+			{
+				// Whisk is writing it at this moment: fall back to the package location.
 				return null;
 			}
 		}
