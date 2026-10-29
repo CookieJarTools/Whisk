@@ -1,8 +1,9 @@
 // Builds the Unity debug adapter (walcht/unity-dap, MIT) that Whisk ships with, from a
 // pinned commit, into src-tauri/resources/unity-debugger. Skipped when that commit is
 // already built. Needs git and the .NET SDK (the adapter targets .NET Framework 4.7.2,
-// which every Windows 10 and 11 machine has).
-import { execFileSync } from 'node:child_process'
+// which every Windows 10 and 11 machine has; Linux runs it with Mono). On Linux without
+// the .NET SDK it's left out, outside CI, so Whisk still builds; only Unity debugging is missing.
+import { execFileSync, spawnSync } from 'node:child_process'
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -15,6 +16,12 @@ const stamp = join(out, 'built-from.txt')
 
 if (existsSync(stamp) && readFileSync(stamp, 'utf8').trim() === COMMIT) {
   console.log(`Unity debugger ${COMMIT} already built.`)
+  process.exit(0)
+}
+
+if (process.platform !== 'win32' && !process.env.CI && spawnSync('dotnet', ['--version']).status !== 0) {
+  console.warn('The .NET SDK isn\'t installed, so this build of Whisk won\'t include the Unity debugger.')
+  mkdirSync(out, { recursive: true })
   process.exit(0)
 }
 
@@ -42,7 +49,7 @@ run('dotnet', ['build', '--configuration', 'Release', '-nologo', '-v', 'q', 'uni
 rmSync(out, { recursive: true, force: true })
 mkdirSync(out, { recursive: true })
 const built = join(work, 'bin', 'Release')
-// Native libraries for other platforms and debug symbols aren't needed on Windows.
+// Native libraries for other platforms and debug symbols aren't needed.
 cpSync(built, out, {
   recursive: true,
   filter: (src) => !src.includes(`${join(built, 'runtimes')}`) && !/\.(pdb|xml)$/i.test(src)

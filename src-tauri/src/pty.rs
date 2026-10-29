@@ -212,7 +212,8 @@ mod tests {
             cwd: std::env::temp_dir().to_string_lossy().into_owned(),
             program: None,
             args: vec![],
-            command_line: Some("Write-Output 'whisk-pty-ok'; exit 3".into()),
+            // Means the same in PowerShell and in sh-like shells.
+            command_line: Some("echo whisk-pty-ok; exit 3".into()),
             env: Default::default(),
             cols: 80,
             rows: 24,

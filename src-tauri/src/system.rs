@@ -5,6 +5,8 @@ use tauri::{AppHandle, Manager};
 
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
+#[cfg(unix)]
+use std::os::unix::process::CommandExt;
 
 #[cfg(windows)]
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
@@ -124,8 +126,38 @@ pub fn open_path(path: String) -> Result<(), String> {
     tauri_plugin_opener::open_path(path, None::<&str>).map_err(|e| e.to_string())
 }
 
+/// Terminal apps to try on Linux, with the arguments that go before the program to run.
+#[cfg(not(windows))]
+const TERMINALS: &[(&str, &[&str])] = &[
+    ("x-terminal-emulator", &["-e"]),
+    ("kitty", &[]),
+    ("ghostty", &["-e"]),
+    ("alacritty", &["-e"]),
+    ("foot", &[]),
+    ("wezterm", &["start", "--"]),
+    ("gnome-terminal", &["--"]),
+    ("konsole", &["-e"]),
+    ("xfce4-terminal", &["-x"]),
+    ("xterm", &["-e"]),
+];
+
+/// $TERMINAL if it's set, else the first of the usual terminal apps that's installed.
+#[cfg(not(windows))]
+fn terminal_app() -> Option<(String, Vec<&'static str>)> {
+    let before = |path: &str| {
+        let name = std::path::Path::new(path).file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+        TERMINALS.iter().find(|(t, _)| *t == name).map(|(_, b)| b.to_vec()).unwrap_or_else(|| vec!["-e"])
+    };
+    if let Some(t) = std::env::var("TERMINAL").ok().filter(|t| !t.is_empty()) {
+        let b = before(&t);
+        return Some((t, b));
+    }
+    TERMINALS.iter().find(|(t, _)| find_program(t).is_some()).map(|(t, b)| (t.to_string(), b.to_vec()))
+}
+
 /// Opens a new terminal window in `cwd` running `args` (program first).
-/// Prefers Windows Terminal, falling back to a plain console.
+/// Prefers Windows Terminal, falling back to a plain console. On Linux, $TERMINAL
+/// or the first terminal app found.
 #[tauri::command]
 pub fn open_in_terminal(cwd: String, args: Vec<String>) -> Result<(), String> {
     if args.is_empty() {
@@ -147,7 +179,17 @@ pub fn open_in_terminal(cwd: String, args: Vec<String>) -> Result<(), String> {
     }
     #[cfg(not(windows))]
     {
-        Command::new(&args[0]).args(&args[1..]).current_dir(&cwd).spawn().map(|_| ()).map_err(|e| e.to_string())
+        let (terminal, before) = terminal_app().ok_or("Couldn't find a terminal app. Set $TERMINAL to the one you use.")?;
+        // Apps started from a launcher may not have the shell's PATH, so the terminal gets the full path.
+        let program = find_program(&args[0]).map(|p| p.to_string_lossy().into_owned()).unwrap_or_else(|| args[0].clone());
+        Command::new(&terminal)
+            .args(before)
+            .arg(program)
+            .args(&args[1..])
+            .current_dir(&cwd)
+            .spawn()
+            .map(|_| ())
+            .map_err(|e| format!("Couldn't open {terminal}: {e}"))
     }
 }
 
@@ -342,7 +384,8 @@ pub fn run_command(app: AppHandle, id: u32, command_line: String, cwd: Option<St
     #[cfg(not(windows))]
     let mut cmd = {
         let mut c = Command::new("sh");
-        c.arg("-c").arg(&command_line);
+        // Its own process group, so stopping it stops everything it started too.
+        c.arg("-c").arg(&command_line).process_group(0);
         c
     };
     if let Some(dir) = &cwd {
@@ -393,7 +436,7 @@ pub fn kill_command(id: u32) -> Result<(), String> {
     }
     #[cfg(not(windows))]
     {
-        Command::new("kill").arg(pid.to_string()).output().map_err(|e| e.to_string())?;
+        Command::new("kill").args(["-TERM", "--", &format!("-{pid}")]).output().map_err(|e| e.to_string())?;
     }
     Ok(())
 }

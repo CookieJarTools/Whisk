@@ -1,3 +1,5 @@
+import { isWindows } from '../lib/platform'
+
 /**
  * Language servers Whisk knows about. Each says which files it serves, how to
  * install it with a one-line command, and what that command needs first (npm,
@@ -45,8 +47,18 @@ const DOTNET: Prerequisite = { program: 'dotnet', label: '.NET SDK', url: 'https
 const GO: Prerequisite = { program: 'go', label: 'Go', url: 'https://go.dev/dl/' }
 const RUSTUP: Prerequisite = { program: 'rustup', label: 'Rust (rustup)', url: 'https://rustup.rs' }
 const WINGET: Prerequisite = { program: 'winget', label: 'winget (App Installer)', url: 'https://aka.ms/getwinget' }
-const RUBY: Prerequisite = { program: 'gem', label: 'Ruby', url: 'https://rubyinstaller.org' }
+const RUBY: Prerequisite = { program: 'gem', label: 'Ruby', url: isWindows ? 'https://rubyinstaller.org' : 'https://www.ruby-lang.org/en/documentation/installation/' }
 const DART: Prerequisite = { program: 'dart', label: 'Dart SDK', url: 'https://dart.dev/get-dart' }
+
+/**
+ * A global npm install. On Linux the global folder usually belongs to root, so it
+ * goes in ~/.local instead, which Whisk searches for tools.
+ */
+const npmGlobal = (packages: string) => (isWindows ? `npm install --global ${packages}` : `npm install --global --prefix "$HOME/.local" ${packages}`)
+
+/** A winget install. Only Windows has winget; elsewhere the server's homepage says how to get it. */
+const winget = (id: string): Pick<ServerDef, 'install' | 'needs'> =>
+  isWindows ? { install: `winget install --exact --id ${id} --accept-source-agreements --accept-package-agreements`, needs: WINGET } : {}
 
 export const BUILT_IN_SERVERS: ServerDef[] = [
   {
@@ -67,7 +79,7 @@ export const BUILT_IN_SERVERS: ServerDef[] = [
     command: 'typescript-language-server',
     args: ['--stdio'],
     extensions: ['ts', 'tsx', 'js', 'jsx', 'mjs', 'cjs', 'mts', 'cts'],
-    install: 'npm install --global typescript-language-server typescript',
+    install: npmGlobal('typescript-language-server typescript'),
     needs: NODE,
     homepage: 'https://github.com/typescript-language-server/typescript-language-server'
   },
@@ -89,7 +101,7 @@ export const BUILT_IN_SERVERS: ServerDef[] = [
     command: 'pyright-langserver',
     args: ['--stdio'],
     extensions: ['py', 'pyi', 'pyw'],
-    install: 'npm install --global pyright',
+    install: npmGlobal('pyright'),
     needs: NODE,
     homepage: 'https://github.com/microsoft/pyright'
   },
@@ -111,8 +123,7 @@ export const BUILT_IN_SERVERS: ServerDef[] = [
     command: 'clangd',
     args: [],
     extensions: ['c', 'cc', 'cpp', 'cxx', 'h', 'hh', 'hpp'],
-    install: 'winget install --exact --id LLVM.LLVM --accept-source-agreements --accept-package-agreements',
-    needs: WINGET,
+    ...winget('LLVM.LLVM'),
     homepage: 'https://clangd.llvm.org/installation'
   },
   {
@@ -122,8 +133,7 @@ export const BUILT_IN_SERVERS: ServerDef[] = [
     command: 'lua-language-server',
     args: [],
     extensions: ['lua'],
-    install: 'winget install --exact --id LuaLS.lua-language-server --accept-source-agreements --accept-package-agreements',
-    needs: WINGET,
+    ...winget('LuaLS.lua-language-server'),
     homepage: 'https://luals.github.io/#install'
   },
   {
@@ -134,7 +144,7 @@ export const BUILT_IN_SERVERS: ServerDef[] = [
     args: ['start'],
     extensions: ['sh', 'bash'],
     languageId: 'shellscript',
-    install: 'npm install --global bash-language-server',
+    install: npmGlobal('bash-language-server'),
     needs: NODE,
     homepage: 'https://github.com/bash-lsp/bash-language-server'
   },
@@ -145,7 +155,7 @@ export const BUILT_IN_SERVERS: ServerDef[] = [
     command: 'yaml-language-server',
     args: ['--stdio'],
     extensions: ['yaml', 'yml'],
-    install: 'npm install --global yaml-language-server',
+    install: npmGlobal('yaml-language-server'),
     needs: NODE,
     homepage: 'https://github.com/redhat-developer/yaml-language-server'
   },
@@ -157,7 +167,7 @@ export const BUILT_IN_SERVERS: ServerDef[] = [
     args: ['--stdio'],
     extensions: ['json', 'jsonc', 'asmdef'],
     languageId: 'json',
-    install: 'npm install --global vscode-langservers-extracted',
+    install: npmGlobal('vscode-langservers-extracted'),
     needs: NODE,
     homepage: 'https://github.com/hrsh7th/vscode-langservers-extracted'
   },
@@ -168,7 +178,7 @@ export const BUILT_IN_SERVERS: ServerDef[] = [
     command: 'vscode-css-language-server',
     args: ['--stdio'],
     extensions: ['css', 'scss', 'less'],
-    install: 'npm install --global vscode-langservers-extracted',
+    install: npmGlobal('vscode-langservers-extracted'),
     needs: NODE,
     homepage: 'https://github.com/hrsh7th/vscode-langservers-extracted'
   },
@@ -180,7 +190,7 @@ export const BUILT_IN_SERVERS: ServerDef[] = [
     args: ['--stdio'],
     extensions: ['html', 'htm'],
     languageId: 'html',
-    install: 'npm install --global vscode-langservers-extracted',
+    install: npmGlobal('vscode-langservers-extracted'),
     needs: NODE,
     homepage: 'https://github.com/hrsh7th/vscode-langservers-extracted'
   },
@@ -192,7 +202,7 @@ export const BUILT_IN_SERVERS: ServerDef[] = [
     args: ['lsp', 'stdio'],
     extensions: ['toml'],
     languageId: 'toml',
-    install: 'npm install --global @taplo/cli',
+    install: npmGlobal('@taplo/cli'),
     needs: NODE,
     homepage: 'https://taplo.tamasfe.dev'
   },
@@ -204,7 +214,7 @@ export const BUILT_IN_SERVERS: ServerDef[] = [
     args: ['--stdio'],
     extensions: ['php'],
     languageId: 'php',
-    install: 'npm install --global intelephense',
+    install: npmGlobal('intelephense'),
     needs: NODE,
     homepage: 'https://intelephense.com'
   },
@@ -228,7 +238,7 @@ export const BUILT_IN_SERVERS: ServerDef[] = [
     args: ['--stdio'],
     extensions: ['svelte'],
     languageId: 'svelte',
-    install: 'npm install --global svelte-language-server',
+    install: npmGlobal('svelte-language-server'),
     needs: NODE,
     homepage: 'https://github.com/sveltejs/language-tools'
   },
@@ -241,7 +251,7 @@ export const BUILT_IN_SERVERS: ServerDef[] = [
     extensions: ['dockerfile'],
     fileNames: ['Dockerfile', 'Containerfile'],
     languageId: 'dockerfile',
-    install: 'npm install --global dockerfile-language-server-nodejs',
+    install: npmGlobal('dockerfile-language-server-nodejs'),
     needs: NODE,
     homepage: 'https://github.com/rcjsuen/dockerfile-language-server'
   },

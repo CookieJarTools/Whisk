@@ -111,15 +111,22 @@ export function DebuggerSettings() {
     setRefresh((r) => r + 1)
   }
 
+  const getPrerequisite = (a: AdapterDef) => (
+    <button className="btn" onClick={() => ipc.openExternal(a.prerequisite!.url)}>
+      Get {a.prerequisite!.label} <Icon name="external" size={12} />
+    </button>
+  )
+
   const controls = (a: AdapterDef) => {
-    if (a.bundled) return <span className="set-badge ok">Comes with Whisk</span>
+    if (a.bundled) return a.prerequisite && prereqs[a.prerequisite.program] === false ? getPrerequisite(a) : <span className="set-badge ok">Comes with Whisk</span>
     if (installing[a.type] && !failed[a.type]) return <span className="set-badge">Installing…</span>
     if (ready[a.type]) return <span className="set-badge ok">Installed</span>
     if (ready[a.type] === undefined) return <span className="set-badge">Checking…</span>
-    if (a.prerequisite && !prereqs[a.prerequisite.program]) {
+    if (a.prerequisite && !prereqs[a.prerequisite.program]) return getPrerequisite(a)
+    if (!a.install) {
       return (
-        <button className="btn" onClick={() => ipc.openExternal(a.prerequisite!.url)}>
-          Get {a.prerequisite.label} <Icon name="external" size={12} />
+        <button className="btn" onClick={() => ipc.openExternal(a.homepage)}>
+          Install guide <Icon name="external" size={12} />
         </button>
       )
     }

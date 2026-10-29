@@ -45,6 +45,7 @@
     "publisher": "CookieJarTools",
     "homepage": "https://github.com/CookieJarTools/Whisk",
     "shortDescription": "A small, fast code editor",
+    "category": "DeveloperTool",
     "windows": {
       "nsis": {
         "installMode": "currentUser",

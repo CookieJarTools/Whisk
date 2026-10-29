@@ -136,7 +136,8 @@ pub async fn download_update(app: AppHandle, state: State<'_, UpdateState>) -> R
 }
 
 /// Installs the downloaded update and restarts into it. On Windows the
-/// installer takes over and relaunches Whisk itself.
+/// installer takes over and relaunches Whisk itself; on Linux the AppImage
+/// (or .deb or .rpm) is replaced in place first.
 #[tauri::command]
 pub fn install_update(app: AppHandle, state: State<'_, UpdateState>) -> Result<(), String> {
     let update = state.pending.lock().unwrap().clone().ok_or("No update to install")?;

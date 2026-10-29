@@ -1,5 +1,6 @@
 import { ipc } from '../lib/ipc'
 import { baseName, joinPath } from '../lib/paths'
+import { isWindows } from '../lib/platform'
 import { runCommand } from '../lib/runCommand'
 import { useSettings } from '../store/settings'
 import type { RunConfig } from '../run/configs'
@@ -75,6 +76,7 @@ const coreclr: AdapterDef = {
   prerequisite: { program: 'dotnet', label: '.NET SDK', url: 'https://dotnet.microsoft.com/download' },
   async install() {
     const dir = await ipc.debuggersDir()
+    if (!isWindows) return `curl -fsSL https://github.com/Samsung/netcoredbg/releases/latest/download/netcoredbg-linux-amd64.tar.gz | tar -xz -C '${dir}'`
     const zip = 'https://github.com/Samsung/netcoredbg/releases/latest/download/netcoredbg-win64.zip'
     return `powershell -NoProfile -ExecutionPolicy Bypass -Command "$z = Join-Path $env:TEMP 'netcoredbg.zip'; Invoke-WebRequest -UseBasicParsing '${zip}' -OutFile $z; Expand-Archive -Force $z '${dir}'; Remove-Item $z"`
   },
@@ -111,7 +113,12 @@ const python: AdapterDef = {
   languages: 'Python',
   homepage: 'https://github.com/microsoft/debugpy',
   prerequisite: { program: 'python', label: 'Python', url: 'https://www.python.org/downloads/' },
-  install: async () => 'python -m pip install --user --upgrade debugpy',
+  async install() {
+    const pip = 'python -m pip install --user --upgrade debugpy'
+    if (isWindows) return pip
+    // Most Linux distributions mark their Python as managed by the package manager.
+    return `${pip} || ${pip} --break-system-packages || (echo "pip couldn't install debugpy. Install it with your package manager instead: python-debugpy on Arch, python3-debugpy on Debian and Ubuntu." && exit 1)`
+  },
   async resolve() {
     const exe = await ipc.which('python')
     if (!exe) return null
@@ -139,7 +146,8 @@ const lldb: AdapterDef = {
   label: 'lldb-dap',
   languages: 'C, C++ and Rust',
   homepage: 'https://lldb.llvm.org/resources/lldbdap.html',
-  install: async () => 'winget install -e --id LLVM.LLVM --accept-package-agreements --accept-source-agreements',
+  // On Linux it comes with the distribution's lldb package.
+  install: isWindows ? async () => 'winget install -e --id LLVM.LLVM --accept-package-agreements --accept-source-agreements' : undefined,
   async resolve() {
     for (const name of ['lldb-dap', 'lldb-vscode']) {
       const path = await ipc.which(name)
@@ -153,7 +161,7 @@ const lldb: AdapterDef = {
       await run('cargo build', ctx, 'The build failed, so there’s nothing to debug. The errors are above.')
       const manifest = await ipc.readText(joinPath(ctx.root, 'Cargo.toml')).catch(() => '')
       const name = /\[package\][^[]*?\bname\s*=\s*"([^"]+)"/.exec(manifest)?.[1] ?? baseName(ctx.root)
-      program = joinPath(ctx.root, `target${ctx.root.includes('\\') ? '\\' : '/'}debug${ctx.root.includes('\\') ? '\\' : '/'}${name}.exe`)
+      program = joinPath(ctx.root, `target${ctx.root.includes('\\') ? '\\' : '/'}debug${ctx.root.includes('\\') ? '\\' : '/'}${name}${isWindows ? '.exe' : ''}`)
     }
     if (!program) throw new Error('This configuration doesn’t say which program to debug.')
     return { type: 'lldb', request: 'launch', program, args: config.debug?.args ?? [], cwd: cwdFor(config, ctx.root), env: Object.entries(config.env ?? {}).map(([k, v]) => `${k}=${v}`), stopOnEntry: false }
@@ -188,9 +196,14 @@ const unity: AdapterDef = {
   homepage: 'https://github.com/walcht/unity-dap',
   attach: true,
   bundled: true,
+  // A .NET Framework program, which Linux runs with Mono.
+  prerequisite: isWindows ? undefined : { program: 'mono', label: 'Mono', url: 'https://www.mono-project.com/download/stable/' },
   async resolve() {
     const exe = await ipc.bundledPath('debuggers/unity/unity-debug-adapter.exe')
-    return (await ipc.pathState(exe)) === 'missing' ? null : { command: exe, args: [] }
+    if ((await ipc.pathState(exe)) === 'missing') return null
+    if (isWindows) return { command: exe, args: [] }
+    const mono = await ipc.which('mono')
+    return mono ? { command: mono, args: [exe] } : null
   },
   async prepare(_config, ctx) {
     const instance = await editorInstance(ctx.root)

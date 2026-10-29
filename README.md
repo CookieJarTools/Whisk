@@ -1,14 +1,39 @@
 # Whisk
 
-Whisk is a small, fast code editor for Windows. It has the parts of a big IDE you actually use every day (suggestions, go to definition, project search, find usages, git, a terminal, running, testing and debugging) without the weight. Everything is monospace, the interface stays out of the way, and Claude is one click away from any method or class.
+Whisk is a small, fast code editor for Windows and Linux. It has the parts of a big IDE you actually use every day (suggestions, go to definition, project search, find usages, git, a terminal, running, testing and debugging) without the weight. Everything is monospace, the interface stays out of the way, and Claude is one click away from any method or class.
 
 ## Install
+
+Whisk updates itself once it's installed. You can change how in **Settings › Updates** (see [Updates](#updates)).
+
+### Windows
 
 1. Go to the [latest release](https://github.com/CookieJarTools/Whisk/releases/latest).
 2. Download `Whisk_x.y.z_x64-setup.exe`.
 3. Run it. It installs just for you, so it won't ask for admin rights.
 
-Whisk updates itself. You can change how in **Settings › Updates** (see [Updates](#updates)).
+### Linux
+
+Download `Whisk_x.y.z_amd64.AppImage` from the [latest release](https://github.com/CookieJarTools/Whisk/releases/latest), make it executable and run it:
+
+```bash
+chmod +x Whisk_*_amd64.AppImage
+./Whisk_*_amd64.AppImage
+```
+
+AppImages need FUSE 2: `sudo pacman -S fuse2` on Arch, `sudo apt install libfuse2t64` on Ubuntu. Keep the AppImage somewhere it can stay, such as `~/Applications`, because updates replace it in place.
+
+There's also a `.deb` and an `.rpm` on the release page, which update themselves the same way (they ask for your password to install).
+
+Whisk is built on Ubuntu 24.04, so it needs a distribution at least that new: Arch, Fedora 40, Debian 13 or Ubuntu 24.04 and later all work.
+
+#### If Whisk opens to a blank window
+
+Some NVIDIA drivers can't draw the window this way. Start Whisk with `WEBKIT_DISABLE_DMABUF_RENDERER=1` in front:
+
+```bash
+WEBKIT_DISABLE_DMABUF_RENDERER=1 ./Whisk_*_amd64.AppImage
+```
 
 ### If Windows warns you
 
@@ -104,7 +129,7 @@ To add your own, or change one Whisk found, choose **Edit configurations…** fr
 
 **Debugging.** Click in the gutter left of the line numbers to set a breakpoint (right-click it to add a condition), then press the bug button. When the program stops you get the call stack, the variables (click to look inside), values when you hover over code, and a console to evaluate expressions.
 
-Debuggers for **C#**, **Python** and **C, C++ and Rust** are built in. Install them with one click in **Settings › Debuggers**. For any other language, click **Add your own** there and enter a debug adapter (anything that speaks the Debug Adapter Protocol), with the launch settings its README lists.
+Debuggers for **C#**, **Python** and **C, C++ and Rust** are built in. Install them with one click in **Settings › Debuggers**. On Linux, get `lldb-dap` (for C, C++ and Rust) from your package manager: it's in the `lldb` package on Arch. For any other language, click **Add your own** there and enter a debug adapter (anything that speaks the Debug Adapter Protocol), with the launch settings its README lists.
 
 C# debugging works with normal .NET programs (console apps, web apps, tests), and with Unity (below).
 
@@ -120,11 +145,13 @@ Set-up adds a small package to the project (`Packages/com.cookiejar.ide.whisk`).
 
 Debugging works in the editor with the Mono scripting backend, which is what the editor always uses. Built players and IL2CPP builds can't be debugged from Whisk yet.
 
+Unity set-up is Windows only for now: on Linux, Unity can't find Whisk to use it as its script editor yet.
+
 ## Language servers
 
 Language servers give Whisk its suggestions, errors and navigation for each language. A server starts the first time you open a file it handles.
 
-Open **Settings › Language servers** to see the list and install them. Most install with one click. If a server needs something first, like Node.js or the .NET SDK, Whisk tells you and links to it.
+Open **Settings › Language servers** to see the list and install them. Most install with one click. If a server needs something first, like Node.js or the .NET SDK, Whisk tells you and links to it. On Linux, servers that come from npm install into `~/.local`, so they don't need root, and clangd and LuaLS come from your package manager (`clang` and `lua-language-server` on Arch).
 
 Built in: C#, TypeScript and JavaScript, Rust, Python, Go, C and C++, Lua, Bash, YAML, JSON, CSS, HTML, TOML, PHP, Ruby, Svelte, Dockerfile, Dart, Java, Kotlin, Zig and Markdown.
 
@@ -251,7 +278,7 @@ Updates are signed, and Whisk won't install one that doesn't match.
 
 ## Building from source
 
-You'll need [Node.js](https://nodejs.org) and [Rust](https://rustup.rs).
+You'll need [Node.js](https://nodejs.org) and [Rust](https://rustup.rs). On Linux you also need WebKitGTK and a few other libraries: see [Tauri's list](https://v2.tauri.app/start/prerequisites/#linux) for your distribution.
 
 ```bash
 git clone https://github.com/CookieJarTools/Whisk.git
@@ -260,7 +287,7 @@ npm install
 npm run tauri dev
 ```
 
-`npm test` runs the tests. `npm run tauri build` makes an installer in `src-tauri/target/release/bundle/nsis`.
+`npm test` runs the tests. `npm run tauri build` makes an installer in `src-tauri/target/release/bundle/nsis` on Windows, and an AppImage, a .deb and an .rpm under `src-tauri/target/release/bundle` on Linux.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how the code is laid out and how releases work.
 
