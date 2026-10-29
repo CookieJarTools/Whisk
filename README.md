@@ -1,41 +1,29 @@
-# Whisk
+<p align="center">
+  <img src="assets/banner.png" alt="Whisk: a small, fast code editor for Windows and Linux" width="100%">
+</p>
 
-Whisk is a small, fast code editor for Windows and Linux. It has the parts of a big IDE you actually use every day (suggestions, go to definition, project search, find usages, git, a terminal, running, testing and debugging) without the weight. Everything is monospace, the interface stays out of the way, and Claude is one click away from any method or class.
+<p align="center">
+  <a href="https://github.com/CookieJarTools/Whisk/releases/latest"><b>Download</b></a> ·
+  <a href="#whats-in-it">What's in it</a> ·
+  <a href="#unity">Unity</a> ·
+  <a href="#claude">Claude</a> ·
+  <a href="#shortcuts">Shortcuts</a>
+</p>
+
+Whisk is a code editor with the parts of a big IDE you actually use every day: suggestions, go to definition, find usages, search everywhere, git, a terminal, and running, testing and debugging. It starts fast and stays out of the way. Everything is monospace, and Claude is one click away from any method or class.
+
+It's free, including for commercial work, and it keeps itself up to date.
 
 ## Install
 
-Whisk updates itself once it's installed. You can change how in **Settings › Updates** (see [Updates](#updates)).
+Get the latest version from the [Releases page](https://github.com/CookieJarTools/Whisk/releases/latest).
 
 ### Windows
 
-1. Go to the [latest release](https://github.com/CookieJarTools/Whisk/releases/latest).
-2. Download `Whisk_x.y.z_x64-setup.exe`.
-3. Run it. It installs just for you, so it won't ask for admin rights.
+Download `Whisk_x.y.z_x64-setup.exe` and run it. It installs just for you, so it won't ask for admin rights.
 
-### Linux
-
-Download `Whisk_x.y.z_amd64.AppImage` from the [latest release](https://github.com/CookieJarTools/Whisk/releases/latest), make it executable and run it:
-
-```bash
-chmod +x Whisk_*_amd64.AppImage
-./Whisk_*_amd64.AppImage
-```
-
-AppImages need FUSE 2: `sudo pacman -S fuse2` on Arch, `sudo apt install libfuse2t64` on Ubuntu. Keep the AppImage somewhere it can stay, such as `~/Applications`, because updates replace it in place.
-
-There's also a `.deb` and an `.rpm` on the release page, which update themselves the same way (they ask for your password to install).
-
-Whisk is built on Ubuntu 24.04, so it needs a distribution at least that new: Arch, Fedora 40, Debian 13 or Ubuntu 24.04 and later all work.
-
-#### If Whisk opens to a blank window
-
-Some NVIDIA drivers can't draw the window this way. Start Whisk with `WEBKIT_DISABLE_DMABUF_RENDERER=1` in front:
-
-```bash
-WEBKIT_DISABLE_DMABUF_RENDERER=1 ./Whisk_*_amd64.AppImage
-```
-
-### If Windows warns you
+<details>
+<summary>Windows says Whisk isn't safe</summary>
 
 Whisk isn't code-signed yet, so Windows may be cautious about it:
 
@@ -44,43 +32,128 @@ Whisk isn't code-signed yet, so Windows may be cautious about it:
 
 Only do this for a file you downloaded from this repo's [Releases page](https://github.com/CookieJarTools/Whisk/releases). Each release is built by GitHub Actions straight from the code here, and you can see the build log for every one. Signed releases are on the way.
 
-## What it does
+</details>
 
-**Scope rails.** Every block of code gets a coloured line down its left side, so you can see where it starts and ends. The block your cursor is in lights up, and the ones around it fade back.
+### Linux
 
-**Suggestions and navigation.** Code completion, hover docs, errors, go to definition, find usages and rename all come from language servers. Whisk installs them for you (see [Language servers](#language-servers)).
+Download `Whisk_x.y.z_amd64.AppImage`, put it somewhere it can stay and run it:
 
-**Quick fixes.** Press Alt+Enter on a problem for the language server's fixes and refactorings, like adding a missing `using`, extracting a method or generating a constructor.
+```bash
+mkdir -p ~/Applications
+mv ~/Downloads/Whisk_*_amd64.AppImage ~/Applications/Whisk.AppImage
+chmod +x ~/Applications/Whisk.AppImage
+~/Applications/Whisk.AppImage
+```
 
-**Search like Rider.** Tap Shift twice to search everything: types, files, methods, actions and text across the whole project. Results update as you type, and text matches show a preview.
+Updates replace the AppImage where it is, so you only do this once. If you'd rather use a package, the release also has a `.deb` and an `.rpm`, which update themselves the same way.
 
-**Your shortcuts.** Pick the Whisk, Rider, VS Code or Visual Studio keymap, then change any shortcut you like. Whisk warns you if a key is already taken.
+Whisk runs on Arch, Fedora 40, Debian 13, Ubuntu 24.04 and anything newer.
 
-**New projects.** Start a C# app, React + Vite site, Node + TypeScript tool, Rust crate, Python project or Go module from **New project…** in the folder menu. Whisk runs the usual tools (`dotnet new`, `cargo new`…) and opens the result.
+<details>
+<summary>Add Whisk to your app launcher</summary>
 
-**Folding and a pinned header.** Fold any block from the gutter, in any language. As you scroll through a long class, its header and the method you're in stay pinned at the top of the editor.
+```bash
+mkdir -p ~/.local/share/applications
+cat > ~/.local/share/applications/whisk.desktop <<EOF
+[Desktop Entry]
+Type=Application
+Name=Whisk
+Comment=A small, fast code editor
+Exec=$HOME/Applications/Whisk.AppImage %F
+Categories=Development;IDE;
+EOF
+```
 
-**Breadcrumbs.** The bar above the editor shows the file and the namespace › class › method you're in, in the same colours as the scope rails.
+</details>
 
-**Split view and diffs.** Right-click a tab and move it to the other side to see two files at once. Compare a file with the clipboard or another file side by side.
+<details>
+<summary>It won't start, or opens to a blank window</summary>
 
-**Git.** Coloured marks in the gutter show what changed since the last commit; click one to see what was there or roll it back. Turn on blame to see who changed each line and when. The **Commit** view in the sidebar lists your changes with a checkbox each, so you can commit just some of them, and push. The branch in the status bar has pull, push and switching branches.
+- AppImages need FUSE 2: `sudo pacman -S fuse2` on Arch, `sudo apt install libfuse2t64` on Ubuntu.
+- Some NVIDIA drivers can't draw the window. Start Whisk with `WEBKIT_DISABLE_DMABUF_RENDERER=1 ~/Applications/Whisk.AppImage`, and put the same in front of `Exec=` if you use the launcher entry above.
+
+</details>
+
+## What's in it
+
+**Scope rails.** Every block of code gets a coloured line down its left side, so you can see where it starts and ends. The block your cursor is in lights up, and the ones around it fade back. The bar above the editor shows the namespace › class › method you're in, in the same colours.
+
+**Suggestions, errors and quick fixes.** Completion, hover docs, errors, go to definition, find usages and rename come from [language servers](#language-servers), which Whisk installs for you. Press Alt+Enter on a problem for fixes and refactorings, like adding a missing `using` or extracting a method.
+
+**Search like Rider.** Tap Shift twice to search types, files, methods, actions and text across the whole project, with a preview as you type.
+
+**Git.** Marks in the gutter show what changed since the last commit; click one to see what was there or roll it back. Turn on blame to see who changed each line. The **Commit** view lists your changes with a checkbox each, so you can commit just some of them, then push. Pull, push and switching branches are on the branch in the status bar.
 
 **Terminal.** A real terminal under the editor (Alt+F12), with as many tabs as you like.
 
-**Run, test and debug.** See [below](#run-test-and-debug).
+**Run, test and debug.** Run your app, run your tests as a tree of results, and debug with breakpoints, variables and the call stack. [More below](#run-test-and-debug).
 
-**Markdown.** Edit with a live preview beside it, or on its own.
+**Your shortcuts.** Pick the Whisk, Rider, VS Code or Visual Studio keymap, then change any shortcut. Whisk warns you if a key is already taken.
 
-**Picks up where you left off.** Each project reopens with the tabs you had open and the cursor where you left it. Files save themselves when you switch to another app and after 15 seconds without typing, as in Rider (change or turn this off in **Settings › Editor**). Turn on **Reformat on save** there to tidy a file with its language server each time you press Ctrl+S.
+**Picks up where you left off.** Each project reopens with the tabs you had and the cursor where you left it. Files save themselves when you switch away and after 15 seconds without typing, as in Rider.
 
-**Compact layout.** Hide the title bar and the file explorer until you move the mouse to the edge of the window, like Zen browser.
+**And the rest.** Fold any block, with the class and method you're in pinned at the top as you scroll. Split view, and side-by-side diffs with the clipboard or another file. Markdown with a live preview. New projects for C#, React + Vite, Node + TypeScript, Rust, Python and Go. A compact layout that hides the title bar and explorer until you reach for them.
 
-**Claude built in.** Send a method or class to Claude with one click (see [Claude](#claude)).
+## Unity
+
+Open a Unity project in Whisk and click **Set up Unity** in the bar that appears. That's all:
+
+- Whisk becomes Unity's script editor. Double-click a script or a console error in Unity and it opens in Whisk at that line, in the window you already have open.
+- C# suggestions, errors and go to definition work across all your assemblies.
+- To debug, pick **Unity Editor** in the box at the top and press the bug button while the project is open in Unity. Whisk switches Unity to Debug mode for the session and attaches. Set breakpoints, press Play, and Whisk stops on them. Stop detaches and leaves Unity running.
+
+Set-up adds a small package to the project (`Packages/com.cookiejar.ide.whisk`). Commit it and your team gets the same set-up. Unity's script editor choice is per computer, so each person picks Whisk once: the bar in Whisk does it for them, or **Preferences › External Tools** in Unity.
+
+On Linux, Unity finds Whisk wherever you keep the AppImage, once you've opened Whisk at least once. Debugging Unity on Linux also needs Mono (the `mono` package on Arch).
+
+Debugging works in the editor, which always uses Mono. Built players and IL2CPP builds can't be debugged from Whisk yet, and Unity's own tests run in Unity's Test Runner rather than in Whisk.
+
+## Claude
+
+Above each method and class there's a small row of links:
+
+- **✦ Ask Claude** sends that code to Claude, ready for your question.
+- **+ context** also sends the rest of the class it lives in and the project types it uses, so Claude has the full picture.
+
+The same options are in the right-click menu, and Ctrl+Alt+A asks about the code at the cursor. By default they open the Claude desktop app with your code filled in. To use Claude Code in a terminal instead, change it in **Settings › Claude**.
+
+## Run, test and debug
+
+**Running.** Pick what to run from the box at the top right and press ▶. Whisk finds the usual things on its own: .NET apps, the scripts in `package.json`, `cargo run`, `go run .` and Python entry points. **Current file** runs whatever file is open. Output appears in the **Run** tab at the bottom.
+
+To add your own, or change one Whisk found, choose **Edit configurations…** from the same box. They're saved in `.whisk/run.json`, so you can commit them for your team:
+
+```json
+{
+  "configurations": [
+    { "name": "Server", "command": "npm run dev", "cwd": "web", "env": { "PORT": "3000" } }
+  ]
+}
+```
+
+**Tests.** The **Tests** tab runs your tests and shows the results as a tree: .NET (xUnit, NUnit, MSTest), Vitest, Jest, pytest, `cargo test` and `go test`. Click a failed test to see why; double-click to open it. **▶ Run test** appears above each test method and test class.
+
+**Debugging.** Click left of the line numbers to set a breakpoint (right-click it to add a condition), then press the bug button. When the program stops you get the call stack, the variables, values when you hover over code, and a console to evaluate expressions.
+
+Debuggers for **C#**, **Python** and **C, C++ and Rust** are built in; install them with one click in **Settings › Debuggers**. On Linux, `lldb-dap` (for C, C++ and Rust) comes from your package manager: it's in the `lldb` package on Arch. For any other language, click **Add your own** there and enter any debugger that speaks the Debug Adapter Protocol.
+
+## Language servers
+
+Language servers give Whisk its suggestions, errors and navigation. Open **Settings › Language servers** to see the list; most install with one click. If one needs something first, like Node.js or the .NET SDK, Whisk tells you and links to it.
+
+Built in: C#, TypeScript and JavaScript, Rust, Python, Go, C and C++, Lua, Bash, YAML, JSON, CSS, HTML, TOML, PHP, Ruby, Svelte, Dockerfile, Dart, Java, Kotlin, Zig and Markdown. For anything else, click **Add your own** and enter the server's command; any server that speaks LSP works.
+
+For C#, open the folder that contains your `.sln` file. On Linux, servers from npm install into `~/.local`, so they don't need root, and clangd and LuaLS come from your package manager (`clang` and `lua-language-server` on Arch).
+
+## Checking your code
+
+Whisk underlines problems as you type: compiler errors from the language server, plus its own simple checks for any language, like trailing spaces, methods that are too long or nest too deep, and empty `catch` blocks. The count is in the status bar, and F8 jumps to the next one.
+
+Turn checks on or off, change their limits or add your own in **Settings › Linter**, and share them with your team in `.whisk/lint.json`. [All the checks and the file format](docs/checks.md).
 
 ## Shortcuts
 
-These are the defaults in the Whisk keymap. Change any of them in **Settings › Keymap**.
+These are the defaults in the Whisk keymap. Change any of them in **Settings › Keymap**, or switch to the Rider, VS Code or Visual Studio keymap.
 
 | Shortcut | Does |
 |---|---|
@@ -111,188 +184,22 @@ These are the defaults in the Whisk keymap. Change any of them in **Settings ›
 | F9 / F7 | Resume / step into (while debugging) |
 | Ctrl+Alt+A | Ask Claude about the code at the cursor |
 
-## Run, test and debug
-
-**Running.** Pick what to run from the box at the top right and press ▶. Whisk finds the usual things on its own: .NET apps, the scripts in `package.json`, `cargo run`, `go run .` and Python entry points. **Current file** runs whatever file is open (Python, JavaScript, TypeScript, Go, C# and more). Output appears in the **Run** tab at the bottom.
-
-To add your own, or change one Whisk found, choose **Edit configurations…** from the same box. They're saved in `.whisk/run.json`, so you can commit them for your team:
-
-```json
-{
-  "configurations": [
-    { "name": "Server", "command": "npm run dev", "cwd": "web", "env": { "PORT": "3000" } }
-  ]
-}
-```
-
-**Tests.** The **Tests** tab runs your tests and shows the results as a tree: .NET (xUnit, NUnit, MSTest), Vitest, Jest, pytest, `cargo test` and `go test`. Click a failed test to see why; double-click to open it. **▶ Run test** appears above each test method, and above test classes. Unity's own tests aren't supported; use Unity's Test Runner for those.
-
-**Debugging.** Click in the gutter left of the line numbers to set a breakpoint (right-click it to add a condition), then press the bug button. When the program stops you get the call stack, the variables (click to look inside), values when you hover over code, and a console to evaluate expressions.
-
-Debuggers for **C#**, **Python** and **C, C++ and Rust** are built in. Install them with one click in **Settings › Debuggers**. On Linux, get `lldb-dap` (for C, C++ and Rust) from your package manager: it's in the `lldb` package on Arch. For any other language, click **Add your own** there and enter a debug adapter (anything that speaks the Debug Adapter Protocol), with the launch settings its README lists.
-
-C# debugging works with normal .NET programs (console apps, web apps, tests), and with Unity (below).
-
-## Unity
-
-Open a Unity project in Whisk and click **Set up Unity** in the bar that appears. That's all:
-
-- Whisk becomes Unity's script editor. Double-click a script or a console error in Unity and it opens in Whisk at that line, in the window you already have open.
-- Whisk's C# support (suggestions, errors, go to definition) works across all your assemblies.
-- To debug, pick **Unity Editor** in the box at the top and press the bug button while the project is open in Unity. Whisk switches Unity to Debug mode for the session and attaches. Set breakpoints, press Play, and Whisk stops on them. Stop detaches and leaves Unity running.
-
-Set-up adds a small package to the project (`Packages/com.cookiejar.ide.whisk`). Commit it and your team gets the same set-up. Unity's script editor choice is per computer, so each person picks Whisk once (the bar in Whisk does it for them, or **Preferences › External Tools** in Unity).
-
-Debugging works in the editor with the Mono scripting backend, which is what the editor always uses. Built players and IL2CPP builds can't be debugged from Whisk yet.
-
-Unity set-up is Windows only for now: on Linux, Unity can't find Whisk to use it as its script editor yet.
-
-## Language servers
-
-Language servers give Whisk its suggestions, errors and navigation for each language. A server starts the first time you open a file it handles.
-
-Open **Settings › Language servers** to see the list and install them. Most install with one click. If a server needs something first, like Node.js or the .NET SDK, Whisk tells you and links to it. On Linux, servers that come from npm install into `~/.local`, so they don't need root, and clangd and LuaLS come from your package manager (`clang` and `lua-language-server` on Arch).
-
-Built in: C#, TypeScript and JavaScript, Rust, Python, Go, C and C++, Lua, Bash, YAML, JSON, CSS, HTML, TOML, PHP, Ruby, Svelte, Dockerfile, Dart, Java, Kotlin, Zig and Markdown.
-
-Language not listed? Click **Add your own** and enter the server's command and the file types it handles. Any server that speaks LSP works. The [official list of language servers](https://microsoft.github.io/language-server-protocol/implementors/servers/) is a good place to find one.
-
-For C#, open the folder that contains your `.sln` file.
-
-Without a language server, F12 still jumps to declarations in the open file and to types anywhere in the project.
-
-## Checking your code
-
-Whisk checks every file as you type and underlines problems. The count shows in the status bar; press F8 to jump to the next one. Some come with a quick fix, like removing trailing spaces.
-
-There are two kinds of check:
-
-- **Language server errors.** Compiler errors and warnings from the language's own server, once it's installed. These are exact.
-- **Whisk's rules.** Simple checks that work on any language, with or without a server:
-
-| Rule | Default |
-|---|---|
-| Trailing whitespace | Note |
-| Newline at end of file | Note |
-| Too many blank lines (more than 2) | Note |
-| Line too long (over 150 characters) | Note |
-| Mixed indentation (spaces in a tab file, or the reverse) | Warning |
-| TODO, FIXME and HACK comments | Note |
-| Nesting too deep (more than 4 levels in a method) | Warning |
-| Method too long (over 80 lines) | Warning |
-| Too many parameters (more than 5) | Warning |
-| Method too complex (more than 15 branches) | Warning |
-| File too long (over 800 lines) | Note |
-| Empty `catch` block | Warning |
-| Leftover debug output (`Debug.Log`, `console.log`…) | Off |
-
-Change any of them in **Settings › Linter**: turn a rule off, make it a warning or an error, or change its limit. You can also add your own rules with a regular expression, and list paths to skip.
-
-To share rules with your team, click **Create .whisk/lint.json** in the same place. Whisk saves your rules into the project, and anything in that file wins over each person's own settings. Commit it like any other file:
-
-```json
-{
-  "rules": {
-    "max-nesting": { "severity": "error", "options": { "max": 2 } },
-    "debug-output": { "severity": "warning" }
-  },
-  "custom": [
-    {
-      "id": "no-find-object",
-      "pattern": "FindObjectOfType",
-      "message": "Cache this in Awake instead",
-      "severity": "warning",
-      "files": "*.cs"
-    }
-  ],
-  "ignore": ["Assets/Plugins/**", "**/*.g.cs"]
-}
-```
-
-## Claude
-
-Above each method and class there's a small row of links:
-
-- **✦ Ask Claude** sends that code to Claude, ready for your question.
-- **+ context** also sends the rest of the class it lives in and the project types it uses, so Claude has the full picture.
-
-You'll find the same options when you right-click in the editor.
-
-By default this opens the Claude desktop app with your code filled in. To use Claude Code in a terminal instead, change it in **Settings › Claude**.
-
-## Plugins
-
-Plugins can add buttons above methods and classes, entries in the right-click menu, and commands with their own shortcuts.
-
-To add one, put a `plugin.js` file in its own folder here:
-
-```
-%USERPROFILE%\.whisk\plugins\my-plugin\plugin.js
-```
-
-Click the plugin count in the status bar to open that folder. Restart Whisk after adding a plugin.
-
-A plugin looks like this:
-
-```js
-export default {
-  id: 'todo-copier',
-  name: 'Copy as TODO',
-  activate(ctx) {
-    // A link above every method, and an entry in the right-click menu
-    ctx.registerSymbolAction({
-      id: 'copy-todo',
-      label: 'Copy as TODO',
-      kinds: ['method', 'function'],
-      run: async (symbol, ide) => {
-        await ide.ui.copy(`TODO: ${symbol.name} (${symbol.relativePath}:${symbol.startLine})`)
-        ide.ui.toast('Copied', 'success')
-      }
-    })
-
-    // A command in Find action (Ctrl+Shift+A), with a default shortcut
-    ctx.registerCommand({
-      id: 'hello',
-      title: 'Todo: Say hello',
-      keys: ['Ctrl+Alt+H'],
-      run: (ide) => ide.ui.toast(`Open folder: ${ide.workspace.root()}`)
-    })
-  }
-}
-```
-
-Plugins can read files, find where types are declared, get the code around the cursor, show messages, copy to the clipboard, open links, run commands in a terminal and save their own settings. The full list is in [src/plugins/api.ts](src/plugins/api.ts).
-
 ## Updates
 
 Whisk checks for new versions every few hours and downloads them in the background. When one is ready, a **Restart to update** button appears in the status bar. Nothing restarts without you.
 
-In **Settings › Updates** you can:
+In **Settings › Updates** you can check now, turn automatic updates off, opt in to pre-releases, or go back to any earlier version if a new one gives you trouble. Updates are signed, and Whisk won't install one that doesn't match.
 
-- check for an update now
-- turn automatic updates off
-- opt in to pre-release versions
-- install any earlier version if a new one gives you trouble
+## Plugins
 
-Updates are signed, and Whisk won't install one that doesn't match.
+Plugins can add links above methods and classes, entries in the right-click menu, and commands with their own shortcuts. Click the plugin count in the status bar to open the plugins folder. [How to write one](docs/plugins.md).
 
-## Building from source
+## Contributing
 
-You'll need [Node.js](https://nodejs.org) and [Rust](https://rustup.rs). On Linux you also need WebKitGTK and a few other libraries: see [Tauri's list](https://v2.tauri.app/start/prerequisites/#linux) for your distribution.
-
-```bash
-git clone https://github.com/CookieJarTools/Whisk.git
-cd Whisk
-npm install
-npm run tauri dev
-```
-
-`npm test` runs the tests. `npm run tauri build` makes an installer in `src-tauri/target/release/bundle/nsis` on Windows, and an AppImage, a .deb and an .rpm under `src-tauri/target/release/bundle` on Linux.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how the code is laid out and how releases work.
+Bug reports and ideas are welcome in [Issues](https://github.com/CookieJarTools/Whisk/issues). To build Whisk yourself or find your way around the code, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-[PolyForm Shield 1.0.0](LICENSE.md). Use Whisk for anything you like; just don't use it to build a competing editor.
+[PolyForm Shield 1.0.0](LICENSE.md). Use Whisk for anything you like, including commercial work; just don't use it to build a competing editor.
 
 Whisk includes the [Unity debug adapter](https://github.com/walcht/unity-dap) by Walid Chtioui (MIT License), built from source when Whisk is built. Its licence is installed next to it.

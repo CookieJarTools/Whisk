@@ -1,0 +1,377 @@
+<!doctype html>
+<!--
+  The README banner. Render it to banner.png at 2000×1000 with:
+    node scripts/render-banner.mjs
+  The editor on the right is drawn here rather than screenshotted, in Whisk's own
+  colours (src/theme/tokens.css, src/editor/theme.ts) and fonts.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Whisk banner</title>
+<style>
+  :root {
+    --bg: #0f1011;
+    --surface: #0b0c0d;
+    --surface-2: #17181a;
+    --surface-3: #1f2023;
+    --border: #212226;
+    --border-strong: #2c2d31;
+    --text: #eeeff1;
+    --text-dim: #9c9ea5;
+    --text-faint: #686a71;
+    --accent: #6e79d6;
+    --add: #4cb782;
+    --info: #4ea7fc;
+    --warn: #f2994a;
+    --lane-0: #6e79d6;
+    --lane-1: #4ea7fc;
+    --lane-2: #4cb782;
+    --lane-3: #f2994a;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { width: 1000px; height: 500px; overflow: hidden; }
+
+  body {
+    position: relative;
+    background: var(--surface);
+    font-family: var(--sans);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* A faint grid that fades out towards the edges. */
+  .grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: radial-gradient(ellipse 80% 90% at 40% 45%, #000 40%, transparent 100%);
+  }
+
+  /* Left: the pitch */
+  .pitch { position: absolute; left: 63px; top: 112px; width: 360px; }
+
+  .icon { width: 58px; height: 58px; display: block; border-radius: 13px; box-shadow: 0 6px 24px rgba(110, 121, 214, 0.28); }
+
+  h1 {
+    margin-top: 26px;
+    font-size: 68px;
+    font-weight: 700;
+    letter-spacing: -2.4px;
+    line-height: 1;
+  }
+
+  .tagline {
+    margin-top: 20px;
+    font-size: 18.5px;
+    line-height: 1.42;
+    color: var(--text-dim);
+    letter-spacing: -0.1px;
+  }
+
+  .pills { display: flex; gap: 9px; margin-top: 28px; }
+
+  .pill {
+    height: 31px;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    border-radius: 7px;
+    font-size: 13.5px;
+    font-weight: 500;
+  }
+
+  .pill.primary { background: var(--accent); color: #fff; }
+  .pill.outline { border: 1px solid var(--border-strong); color: var(--text); }
+
+  /* Right: a Whisk window */
+  .window {
+    position: absolute;
+    left: 452px;
+    top: 44px;
+    width: 518px;
+    height: 480px;
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 11px;
+    overflow: hidden;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  }
+
+  .titlebar {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    gap: 7px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .titlebar .mini { width: 15px; height: 15px; border-radius: 4px; }
+  .titlebar .project { color: var(--text); font-weight: 600; }
+  .titlebar .spacer { flex: 1; }
+  .titlebar .run { color: var(--text-dim); margin-right: 6px; }
+  .titlebar svg { display: block; }
+  .controls { display: flex; gap: 14px; margin-left: 12px; color: var(--text-faint); font-size: 10px; }
+
+  .body { display: flex; height: calc(100% - 32px); }
+
+  .sidebar { width: 150px; padding: 8px 7px; border-right: 1px solid var(--border); }
+
+  .search {
+    height: 24px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    padding: 0 7px;
+    color: var(--text-faint);
+    justify-content: space-between;
+  }
+
+  .search kbd { font-family: inherit; font-size: 8.5px; border: 1px solid var(--border); border-radius: 3px; padding: 0 3px; }
+
+  .segments {
+    margin-top: 7px;
+    height: 24px;
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 2px;
+  }
+
+  .segments span { flex: 1; display: flex; align-items: center; justify-content: center; border-radius: 3px; }
+  .segments .on { background: var(--surface-3); color: var(--text); }
+  .segments em { font-style: normal; color: var(--text-faint); margin-left: 5px; font-size: 9px; }
+
+  .section { margin: 11px 0 5px 6px; color: var(--text-faint); font-size: 9.5px; }
+
+  .tree div { height: 20px; display: flex; align-items: center; gap: 5px; white-space: nowrap; overflow: hidden; border-radius: 4px; }
+  .tree .chev { width: 8px; color: var(--text-faint); font-size: 8px; text-align: center; }
+  .tree .dir { color: var(--text); }
+  .tree .changed { color: var(--info); }
+  .tree .new { color: var(--add); }
+  .tree .active { background: var(--surface-3); }
+  .tree .file-ico { width: 8px; height: 10px; border: 1.2px solid currentColor; border-radius: 1.5px; opacity: 0.7; flex: none; }
+  .tree .cs { color: #b884e0; }
+  .tree .md { color: var(--text-faint); }
+
+  .editor { flex: 1; position: relative; min-width: 0; }
+
+  .tabs { height: 30px; display: flex; border-bottom: 1px solid var(--border); }
+
+  .tab { display: flex; align-items: center; gap: 6px; padding: 0 12px; border-right: 1px solid var(--border); white-space: nowrap; }
+  .tab.on { color: var(--text); background: var(--surface-2); box-shadow: inset 0 -1.5px 0 var(--accent); }
+  .tab .x { color: var(--text-faint); font-size: 8px; margin-left: 2px; }
+
+  .crumbs { height: 24px; display: flex; align-items: center; gap: 6px; padding-left: 12px; color: var(--text-dim); border-bottom: 1px solid var(--border); }
+  .crumbs .sep { color: var(--text-faint); }
+  .crumbs .mark { display: inline-block; width: 2px; height: 9px; border-radius: 1px; margin-right: 4px; vertical-align: -1px; }
+
+  .code { position: absolute; top: 54px; left: 0; right: 0; bottom: 0; padding-top: 8px; font-size: 10.5px; }
+
+  .line { position: relative; height: 18px; line-height: 18px; white-space: pre; }
+  .line.cursor { background: rgba(255, 255, 255, 0.028); }
+  .ln { position: absolute; left: 0; width: 30px; text-align: right; color: #45474d; }
+  .line.cursor .ln { color: var(--text-dim); }
+  .git { position: absolute; left: 34px; top: 2px; bottom: 2px; width: 2px; border-radius: 1px; }
+  .git.add { background: var(--add); }
+  .git.mod { background: var(--info); }
+  .txt { position: absolute; left: 46px; color: #d4d6db; }
+  .lens { color: var(--text-faint); font-size: 9.5px; }
+  .lens b { color: #a7aef0; font-weight: 500; }
+  .lens svg { display: inline-block; vertical-align: -1px; margin-right: 4px; }
+
+  .caret { display: inline-block; width: 1.5px; height: 13px; background: var(--text); vertical-align: -2px; margin-left: 0.5px; }
+
+  .rails { position: absolute; left: 46px; top: 8px; overflow: visible; }
+
+  .k { color: #8f9bef; }
+  .c { color: #c38be0; }
+  .t { color: #3fb5b5; }
+  .td { color: #3fb5b5; font-weight: 600; }
+  .f { color: #4ea7fc; }
+  .fd { color: #4ea7fc; font-weight: 600; }
+  .s { color: #86c06a; }
+  .n { color: #f2994a; }
+  .p { color: #c9b3e8; }
+  .ns { color: #5f9ea8; }
+  .o { color: #9aa3b0; }
+  .a { color: #e0698f; }
+
+  /* The completion list under the caret */
+  .complete {
+    position: absolute;
+    width: 216px;
+    background: #1a1b1e;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    padding: 4px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+    font-size: 10px;
+    z-index: 2;
+  }
+
+  .complete div { height: 21px; display: flex; align-items: center; gap: 7px; padding: 0 6px; border-radius: 4px; color: #d4d6db; white-space: nowrap; }
+  .complete .sel { background: rgba(110, 121, 214, 0.22); }
+  .complete i { font-style: normal; width: 13px; height: 13px; border-radius: 3px; background: rgba(78, 167, 252, 0.16); color: var(--info); font-size: 8px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .complete .m { color: var(--info); }
+  .complete .sig { margin-left: auto; color: var(--text-faint); font-size: 9px; overflow: hidden; text-overflow: ellipsis; }
+
+  .fade { position: absolute; left: 0; right: 0; bottom: 0; height: 120px; z-index: 1; background: linear-gradient(rgba(11, 12, 13, 0), var(--surface) 88%); }
+</style>
+</head>
+<body>
+<div class="grid"></div>
+
+<div class="pitch">
+  <svg class="icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+    <rect width="512" height="512" fill="#6e79d6"/>
+    <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke-width="20" d="M206 306C128 228 300 56 392 120C456 212 284 384 206 306Z"/>
+      <path stroke-width="14" d="M206 306C178 222 320 92 392 120"/>
+      <path stroke-width="14" d="M206 306C290 334 420 192 392 120"/>
+      <path stroke-width="14" d="M206 306L392 120"/>
+      <path stroke-width="46" d="M196 316L104 408"/>
+    </g>
+    <rect x="180" y="276" width="44" height="58" rx="10" transform="rotate(45 202 305)" fill="#ffffff"/>
+  </svg>
+  <h1>Whisk</h1>
+  <p class="tagline">A small, fast code editor. The parts of an IDE you use every day, without the weight, and Claude one click away.</p>
+  <div class="pills">
+    <span class="pill primary">Windows · Linux</span>
+    <span class="pill outline">Free for commercial use</span>
+  </div>
+</div>
+
+<div class="window">
+  <div class="titlebar">
+    <svg class="mini" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#6e79d6"/><g fill="none" stroke="#fff" stroke-linecap="round"><path stroke-width="34" d="M206 306C128 228 300 56 392 120C456 212 284 384 206 306Z"/><path stroke-width="60" d="M196 316L104 408"/></g></svg>
+    <span class="project">Tidewater</span><span>⌄</span>
+    <span class="spacer"></span>
+    <span class="run">Unity Editor ⌄</span>
+    <svg width="10" height="11" viewBox="0 0 10 11"><path d="M1.5 1.2v8.6L8.8 5.5z" fill="none" stroke="#4cb782" stroke-width="1.4" stroke-linejoin="round"/></svg>
+    <svg width="12" height="12" viewBox="0 0 12 12" style="margin-left:6px"><g fill="none" stroke="#f2994a" stroke-width="1.2" stroke-linecap="round"><ellipse cx="6" cy="7" rx="2.6" ry="3.4"/><path d="M4.4 3.6 3.4 2.4M7.6 3.6l1-1.2M3.4 7H1.4M8.6 7h2M3.6 9.4 2 10.6M8.4 9.4l1.6 1.2"/></g></svg>
+    <span class="controls"><span>─</span><span>□</span><span>✕</span></span>
+  </div>
+  <div class="body">
+    <div class="sidebar">
+      <div class="search"><span>⌕ Go to file…</span><kbd>Ctrl P</kbd></div>
+      <div class="segments"><span class="on">Files</span><span>Commit<em>3</em></span></div>
+      <div class="section">Files</div>
+      <div class="tree">
+        <div><span class="chev">▾</span><span class="dir changed">Assets</span></div>
+        <div style="padding-left:8px"><span class="chev">▾</span><span class="dir changed">Scripts</span></div>
+        <div class="active" style="padding-left:20px"><span class="file-ico cs"></span><span class="changed">PlayerMovement.cs</span></div>
+        <div style="padding-left:20px"><span class="file-ico cs"></span><span class="new">Inventory.cs</span></div>
+        <div style="padding-left:20px"><span class="file-ico cs"></span><span>Enemy.cs</span></div>
+        <div style="padding-left:20px"><span class="file-ico cs"></span><span class="changed">SaveSystem.cs</span></div>
+        <div style="padding-left:8px"><span class="chev">›</span><span class="dir">Prefabs</span></div>
+        <div style="padding-left:8px"><span class="chev">›</span><span class="dir">Scenes</span></div>
+        <div><span class="chev">›</span><span class="dir">Packages</span></div>
+        <div><span class="chev">›</span><span class="dir">ProjectSettings</span></div>
+        <div style="padding-left:13px"><span class="file-ico md"></span><span>README.md</span></div>
+      </div>
+    </div>
+
+    <div class="editor">
+      <div class="tabs">
+        <div class="tab on"><span class="cs" style="color:#b884e0">C#</span>PlayerMovement.cs<span class="x">✕</span></div>
+        <div class="tab"><span style="color:#b884e0">C#</span>Inventory.cs</div>
+      </div>
+      <div class="crumbs">
+        <span>Scripts</span><span class="sep">›</span>
+        <span><i class="mark" style="background:var(--lane-0)"></i>Tidewater</span><span class="sep">›</span>
+        <span><i class="mark" style="background:var(--lane-1)"></i>PlayerMovement</span><span class="sep">›</span>
+        <span style="color:var(--text)"><i class="mark" style="background:var(--lane-2)"></i>Update</span>
+      </div>
+      <div class="code" id="code"></div>
+    </div>
+  </div>
+</div>
+<div class="fade"></div>
+
+<script>
+  // The render script asks for twice the size, so the PNG stays sharp on high-density screens.
+  if (location.hash === '#2x') document.documentElement.style.zoom = 2
+
+  // Each line: [number, html, git marker]. A null number is a widget line (the Ask Claude lens).
+  const lines = [
+    [3, '<span class="k">namespace</span> <span class="ns">Tidewater</span>'],
+    [4, '{'],
+    [5, '    <span class="k">public class</span> <span class="td">PlayerMovement</span> <span class="o">:</span> <span class="t">MonoBehaviour</span>'],
+    [6, '    {'],
+    [7, '        [<span class="t">SerializeField</span>] <span class="k">private float</span> speed <span class="o">=</span> <span class="n">6f</span>;'],
+    [8, '        <span class="k">private</span> <span class="t">Rigidbody</span> body;'],
+    [null, '        <span class="lens"><b><svg width="8" height="8" viewBox="0 0 8 8"><path d="M4 0C4.4 2.6 5.4 3.6 8 4 5.4 4.4 4.4 5.4 4 8 3.6 5.4 2.6 4.4 0 4 2.6 3.6 3.6 2.6 4 0Z" fill="#a7aef0"/></svg>Ask Claude</b> · + context</span>'],
+    [9, '        <span class="k">private void</span> <span class="fd">Update</span>()'],
+    [10, '        {'],
+    [11, '            body.<span class="p">velocity</span> <span class="o">=</span> <span class="f">ReadInput</span>() <span class="o">*</span> speed;', 'mod'],
+    [12, '            <span class="c">if</span> (<span class="t">Input</span>.<span class="f">GetButtonDown</span>(<span class="s">"Jump"</span>))', 'add'],
+    [13, '            {', 'add'],
+    [14, '                body.<span class="f">Add</span><span class="caret"></span>', 'add'],
+    [15, '            }', 'add'],
+    [16, '        }'],
+    [17, '    }'],
+    [18, '}'],
+  ]
+  const CURSOR = 14
+  const LINE = 18
+  const CHAR = 6.3
+
+  const code = document.getElementById('code')
+  for (const [n, html, git] of lines) {
+    const row = document.createElement('div')
+    row.className = 'line' + (n === CURSOR ? ' cursor' : '')
+    row.innerHTML = `<span class="ln">${n ?? ''}</span>${git ? `<span class="git ${git}"></span>` : ''}<span class="txt">${html}</span>`
+    code.appendChild(row)
+  }
+
+  // Scope rails, drawn the way src/editor/scopeRails.ts draws them: the block the caret
+  // is in is lit, the blocks around it are half bright, the rest fade back.
+  const row = (n) => lines.findIndex((l) => l[0] === n)
+  const blocks = [
+    { open: 4, close: 18, col: 0, depth: 0 },
+    { open: 6, close: 17, col: 4, depth: 1 },
+    { open: 10, close: 16, col: 8, depth: 2 },
+    { open: 13, close: 15, col: 12, depth: 3 },
+  ]
+  let svg = ''
+  for (const b of blocks) {
+    const xText = b.col * CHAR - 2
+    const xRail = xText - 5
+    const y1 = row(b.open) * LINE + LINE / 2
+    const y2 = row(b.close) * LINE + LINE / 2
+    const r = 5
+    const d = `M${xText} ${y1}Q${xRail} ${y1} ${xRail} ${y1 + r}L${xRail} ${y2 - r}Q${xRail} ${y2} ${xText} ${y2}`
+    const lit = b.depth === 3
+    const colour = `var(--lane-${b.depth})`
+    if (lit) svg += `<path d="${d}" style="stroke:${colour}" stroke-width="6" opacity="0.16" fill="none" stroke-linecap="round"/>`
+    svg += `<path d="${d}" style="stroke:${colour}" stroke-width="${lit ? 1.7 : 1.3}" opacity="${lit ? 1 : 0.5}" fill="none" stroke-linecap="round"/>`
+  }
+  code.insertAdjacentHTML('beforeend', `<svg class="rails" width="10" height="10">${svg}</svg>`)
+
+  // The completion list opens under "Add".
+  const at = row(CURSOR)
+  code.insertAdjacentHTML(
+    'beforeend',
+    `<div class="complete" style="left:${46 + 16 * CHAR}px;top:${8 + (at + 1) * LINE + 2}px">
+      <div class="sel"><i>m</i><span><span class="m">Add</span>Force</span><span class="sig">(Vector3 force, ForceMode mode)</span></div>
+      <div><i>m</i><span><span class="m">Add</span>Torque</span><span class="sig">(Vector3 torque)</span></div>
+      <div><i>m</i><span><span class="m">Add</span>RelativeForce</span><span class="sig">(Vector3 force)</span></div>
+      <div><i>m</i><span><span class="m">Add</span>ExplosionForce</span><span class="sig">(float force, …)</span></div>
+    </div>`
+  )
+</script>
+</body>
+</html>

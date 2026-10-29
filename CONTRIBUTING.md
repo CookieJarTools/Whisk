@@ -2,7 +2,11 @@
 
 ## Running it
 
+You'll need [Node.js](https://nodejs.org) and [Rust](https://rustup.rs). On Linux you also need WebKitGTK and a few other libraries: see [Tauri's list](https://v2.tauri.app/start/prerequisites/#linux) for your distribution.
+
 ```bash
+git clone https://github.com/CookieJarTools/Whisk.git
+cd Whisk
 npm install
 npm run tauri dev
 ```
@@ -16,6 +20,7 @@ npm run tauri dev -- -- -- <folder> [file…]
 - `npm test` runs the unit tests.
 - `npm run typecheck` checks the TypeScript.
 - `cargo test --manifest-path src-tauri/Cargo.toml` runs the Rust tests.
+- `npm run tauri build` makes an installer in `src-tauri/target/release/bundle/nsis` on Windows, and an AppImage, a .deb and an .rpm under `src-tauri/target/release/bundle` on Linux.
 - `npx vite`, then open http://localhost:1420/preview.html, runs the interface in a browser with a stand-in backend and a sample project ([src/dev/preview.ts](src/dev/preview.ts)). Handy for checking layout without building the app.
 
 ## Where things are
@@ -40,6 +45,8 @@ npm run tauri dev -- -- -- <folder> [file…]
 | `src/wizard` | New Project templates |
 | `src/components` | The interface |
 | `src/theme` | Colours and styles, shared with CrumbTree |
+| `assets/banner.html` | The README banner; `node scripts/render-banner.mjs` renders it to `banner.png` (needs Firefox) |
+| `docs` | User guides too long for the README: the linter's checks and writing plugins |
 
 ## Releasing
 
