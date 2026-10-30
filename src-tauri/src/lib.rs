@@ -1,3 +1,4 @@
+mod appimage;
 mod fs;
 mod git;
 mod lsp;

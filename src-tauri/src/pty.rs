@@ -100,6 +100,12 @@ fn start(
     let mut cmd = CommandBuilder::new(resolved);
     cmd.args(&args);
     cmd.cwd(&launch.cwd);
+    for (key, value) in crate::system::child_env() {
+        match value {
+            Some(value) => cmd.env(key, value),
+            None => cmd.env_remove(key),
+        }
+    }
     cmd.env("TERM", "xterm-256color");
     cmd.env("COLORTERM", "truecolor");
     for (k, v) in launch.env {
@@ -242,6 +248,37 @@ mod tests {
         drop(pty);
         assert!(output.contains("whisk-pty-ok"), "output was: {output:?}");
         assert_eq!(code, Some(3));
+    }
+
+    /// On Linux the program leads its own session, so when it ends the kernel hangs up on
+    /// everything in its foreground group too: the vite that `npm run dev` started doesn't
+    /// outlive Stop.
+    #[cfg(unix)]
+    #[test]
+    fn stopping_ends_what_the_program_started_too() {
+        // Anchored, so it matches the sleep itself and not a shell whose command line mentions it.
+        let running = || std::process::Command::new("pgrep").args(["-f", "^sleep 917$"]).status().map(|s| s.success()).unwrap_or(false);
+        let launch = Launch {
+            cwd: std::env::temp_dir().to_string_lossy().into_owned(),
+            program: Some("sh".into()),
+            args: vec!["-c".into(), "sleep 917 & sleep 918".into()],
+            command_line: None,
+            env: Default::default(),
+            cols: 80,
+            rows: 24,
+        };
+        let mut pty = start(launch, |_| {}, |_| {}).expect("terminal starts");
+        let deadline = std::time::Instant::now() + Duration::from_secs(10);
+        while !running() {
+            assert!(std::time::Instant::now() < deadline, "the background sleep never started");
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        let _ = pty.killer.kill();
+        let deadline = std::time::Instant::now() + Duration::from_secs(10);
+        while running() {
+            assert!(std::time::Instant::now() < deadline, "the background sleep outlived stop()");
+            std::thread::sleep(Duration::from_millis(50));
+        }
     }
 
     #[test]

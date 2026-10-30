@@ -30,7 +30,8 @@ pub async fn git(cwd: String, args: Vec<String>, stdin: Option<String>) -> Resul
 fn run_git(cwd: &str, args: &[String], stdin: Option<String>) -> Result<GitOutput, String> {
     let program = find_program("git").ok_or("Git isn't installed, or isn't on PATH. Get it from https://git-scm.com")?;
     let mut cmd = Command::new(program);
-    cmd.args(args)
+    crate::system::user_env(&mut cmd)
+        .args(args)
         .current_dir(cwd)
         // Never wait on a terminal prompt nobody can see; the credential manager still works.
         .env("GIT_TERMINAL_PROMPT", "0")

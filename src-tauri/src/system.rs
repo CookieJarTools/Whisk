@@ -3,6 +3,8 @@ use std::process::Command;
 
 use tauri::{AppHandle, Manager};
 
+use crate::appimage;
+
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 #[cfg(unix)]
@@ -24,6 +26,7 @@ pub fn resolve_command(program: &str, args: &[String]) -> Result<Command, String
         Command::new(&path)
     };
     cmd.args(args);
+    user_env(&mut cmd);
     #[cfg(windows)]
     cmd.creation_flags(CREATE_NO_WINDOW);
     Ok(cmd)
@@ -34,10 +37,29 @@ fn tool_dirs() -> Vec<PathBuf> {
     let mut dirs = Vec::new();
     if let Some(home) = std::env::var_os("USERPROFILE").or_else(|| std::env::var_os("HOME")) {
         let home = PathBuf::from(home);
-        for sub in ["go/bin", ".cargo/bin", ".dotnet/tools", ".local/bin", ".bun/bin", ".whisk/debuggers/netcoredbg"] {
+        for sub in [
+            "go/bin",
+            ".cargo/bin",
+            ".dotnet/tools",
+            ".local/bin",
+            ".bun/bin",
+            ".deno/bin",
+            ".volta/bin",
+            ".npm-global/bin",
+            ".local/share/pnpm",
+            ".whisk/debuggers/netcoredbg",
+        ] {
             dirs.push(home.join(sub));
         }
+        // Ruby keeps per-user gems in a folder for each Ruby version.
+        for gems in [".local/share/gem/ruby", ".gem/ruby"] {
+            if let Ok(versions) = std::fs::read_dir(home.join(gems)) {
+                dirs.extend(versions.flatten().map(|v| v.path().join("bin")));
+            }
+        }
     }
+    #[cfg(not(windows))]
+    dirs.push(PathBuf::from("/usr/local/go/bin"));
     // LLVM's installer (for lldb-dap) doesn't always add itself to PATH.
     if let Some(program_files) = std::env::var_os("ProgramFiles") {
         dirs.push(PathBuf::from(program_files).join("LLVM").join("bin"));
@@ -48,17 +70,46 @@ fn tool_dirs() -> Vec<PathBuf> {
     dirs
 }
 
-/// Like `which`, but also looks in the usual per-user tool folders.
+/// Like `which`, but also looks in the usual per-user tool folders. Searches the user's
+/// own PATH, not the one an AppImage starts Whisk with.
 pub fn find_program(program: &str) -> Option<PathBuf> {
-    if let Ok(path) = which::which(program) {
+    let path_var = appimage::user_path().unwrap_or_default();
+    let cwd = std::env::current_dir().ok()?;
+    if let Ok(path) = which::which_in(program, Some(&path_var), &cwd) {
         return Some(path);
     }
-    let path_var = std::env::var_os("PATH").unwrap_or_default();
     let mut paths: Vec<PathBuf> = tool_dirs();
     paths.extend(std::env::split_paths(&path_var));
     let joined = std::env::join_paths(paths).ok()?;
-    let cwd = std::env::current_dir().ok()?;
     which::which_in(program, Some(joined), cwd).ok()
+}
+
+/// What to change in the environment of every program Whisk starts: the user's own
+/// environment rather than an AppImage's, and a PATH that also has the tool folders, so
+/// a command finds the same `rustup` or `pyright` that Whisk's checks found.
+pub fn child_env() -> Vec<(String, Option<String>)> {
+    let mut changes: Vec<(String, Option<String>)> = appimage::changes().iter().filter(|(key, _)| key != "PATH").cloned().collect();
+    let mut paths: Vec<PathBuf> = std::env::split_paths(&appimage::user_path().unwrap_or_default()).collect();
+    for dir in tool_dirs() {
+        if dir.is_dir() && !paths.contains(&dir) {
+            paths.push(dir);
+        }
+    }
+    if let Ok(path) = std::env::join_paths(paths) {
+        changes.push(("PATH".into(), Some(path.to_string_lossy().into_owned())));
+    }
+    changes
+}
+
+/// Gives a command the environment from `child_env`.
+pub fn user_env(cmd: &mut Command) -> &mut Command {
+    for (key, value) in child_env() {
+        match value {
+            Some(value) => cmd.env(key, value),
+            None => cmd.env_remove(key),
+        };
+    }
+    cmd
 }
 
 #[tauri::command]
@@ -118,12 +169,34 @@ fn expand_env(value: &str) -> String {
 
 #[tauri::command]
 pub fn open_external(url: String) -> Result<(), String> {
-    tauri_plugin_opener::open_url(url, None::<&str>).map_err(|e| e.to_string())
+    if cfg!(windows) {
+        return tauri_plugin_opener::open_url(url, None::<&str>).map_err(|e| e.to_string());
+    }
+    open_with_desktop(url)
 }
 
 #[tauri::command]
 pub fn open_path(path: String) -> Result<(), String> {
-    tauri_plugin_opener::open_path(path, None::<&str>).map_err(|e| e.to_string())
+    if cfg!(windows) {
+        return tauri_plugin_opener::open_path(path, None::<&str>).map_err(|e| e.to_string());
+    }
+    open_with_desktop(path)
+}
+
+/// Opens a link or a file in the desktop's default app, through xdg-open or whichever
+/// launcher is installed, with the user's own environment. The opener plugin would pass
+/// on an AppImage's, and the browser or file manager may not start with its libraries.
+fn open_with_desktop(target: String) -> Result<(), String> {
+    use std::process::Stdio;
+    for mut launcher in open::commands(&target) {
+        let started = user_env(&mut launcher).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).spawn();
+        // The first launcher that exists does the opening; trying the next after a failure could open it twice.
+        if let Ok(mut child) = started {
+            std::thread::spawn(move || child.wait());
+            return Ok(());
+        }
+    }
+    Err(format!("Couldn't find an app to open {target}"))
 }
 
 /// Terminal apps to try on Linux, with the arguments that go before the program to run.
@@ -182,7 +255,8 @@ pub fn open_in_terminal(cwd: String, args: Vec<String>) -> Result<(), String> {
         let (terminal, before) = terminal_app().ok_or("Couldn't find a terminal app. Set $TERMINAL to the one you use.")?;
         // Apps started from a launcher may not have the shell's PATH, so the terminal gets the full path.
         let program = find_program(&args[0]).map(|p| p.to_string_lossy().into_owned()).unwrap_or_else(|| args[0].clone());
-        Command::new(&terminal)
+        let mut cmd = Command::new(&terminal);
+        user_env(&mut cmd)
             .args(before)
             .arg(program)
             .args(&args[1..])
@@ -193,10 +267,19 @@ pub fn open_in_terminal(cwd: String, args: Vec<String>) -> Result<(), String> {
     }
 }
 
+/// Windows gives each user their own temp folder; Linux's /tmp is shared by everyone on
+/// the machine, so there Whisk's temporary files go in ~/.whisk/tmp instead.
+fn temp_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    if cfg!(windows) {
+        return Ok(std::env::temp_dir().join("whisk"));
+    }
+    Ok(app.path().home_dir().map_err(|e| e.to_string())?.join(".whisk").join("tmp"))
+}
+
 #[tauri::command]
-pub fn write_temp(name: String, content: String) -> Result<String, String> {
+pub fn write_temp(app: AppHandle, name: String, content: String) -> Result<String, String> {
     let safe: String = name.chars().map(|c| if c.is_alphanumeric() || c == '.' || c == '-' { c } else { '_' }).collect();
-    let mut path: PathBuf = std::env::temp_dir().join("whisk");
+    let mut path: PathBuf = temp_dir(&app)?;
     std::fs::create_dir_all(&path).map_err(|e| e.to_string())?;
     path.push(safe);
     std::fs::write(&path, content).map_err(|e| e.to_string())?;
@@ -406,6 +489,7 @@ pub fn run_command(app: AppHandle, id: u32, command_line: String, cwd: Option<St
     if let Some(dir) = &cwd {
         cmd.current_dir(dir);
     }
+    user_env(&mut cmd);
     let mut child = cmd
         .stdin(Stdio::null())
         .stdout(Stdio::piped())

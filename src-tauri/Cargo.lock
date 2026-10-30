@@ -5306,6 +5306,7 @@ dependencies = [
 name = "whisk"
 version = "0.3.1"
 dependencies = [
+ "open",
  "portable-pty",
  "regex",
  "reqwest 0.12.28",
