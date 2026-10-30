@@ -1,6 +1,6 @@
 [package]
 name = "whisk"
-version = "0.3.1"
+version = "0.3.2"
 description = "Whisk — a small, fast code editor"
 authors = ["Joseph Cook"]
 edition = "2024"
