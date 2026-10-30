@@ -21,6 +21,7 @@ export function NewProjectWizard() {
   const [templateId, setTemplateId] = useState(TEMPLATES[0].id)
   const [name, setName] = useState('MyProject')
   const [location, setLocation] = useState('')
+  const [home, setHome] = useState('')
   const [git, setGit] = useState(true)
   const [options, setOptions] = useState<Record<string, string | boolean>>(defaultsFor(TEMPLATES[0]))
   const [tools, setTools] = useState<Record<string, boolean>>({})
@@ -31,11 +32,14 @@ export function NewProjectWizard() {
   const logRef = useRef<HTMLPreElement>(null)
 
   const template = TEMPLATES.find((t) => t.id === templateId)!
-  const dir = location && name ? joinPath(location, name) : ''
+  // A typed ~/Projects means the home folder, as it would in a terminal.
+  const where = home ? location.replace(/^~(?=$|[\\/])/, home) : location
+  const dir = where && name ? joinPath(where, name) : ''
   const groups = useMemo(() => [...new Set(TEMPLATES.map((t) => t.group))], [])
 
   useEffect(() => {
     if (!open) return
+    homeDir().then(setHome)
     setLog([])
     setFailed(false)
     let saved: string | null = null
@@ -93,7 +97,7 @@ export function NewProjectWizard() {
 
   const create = async () => {
     if (problem || running || !dir) return
-    const answers: Answers = { name, location, git, options }
+    const answers: Answers = { name, location: where, git, options }
     const steps = withGit(template, answers, dir, template.steps(answers, dir))
     setRunning(true)
     setFailed(false)

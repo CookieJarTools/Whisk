@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { currentFileConfig, detectConfigs, isRunnableCsproj, parseProjectConfigs, serializeProjectConfigs } from './configs'
 import { detectTestTargets } from '../tests/runner'
+import { python } from '../lib/platform'
 
 const APP = '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType></PropertyGroup></Project>'
 const LIB = '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup></Project>'
@@ -33,7 +34,7 @@ describe('detectConfigs', () => {
   it('knows Cargo, Go and Python entry points', async () => {
     const files = { 'Cargo.toml': '', 'go.mod': '', 'main.py': '' }
     const names = (await detectConfigs(Object.keys(files), reader(files))).map((c) => c.command)
-    expect(names).toEqual(['cargo run', 'go run .', 'python main.py'])
+    expect(names).toEqual(['cargo run', 'go run .', `${python} main.py`])
   })
 })
 
@@ -50,7 +51,7 @@ describe('project run.json', () => {
 
 describe('currentFileConfig', () => {
   it('picks the runner by extension and quotes paths with spaces', () => {
-    expect(currentFileConfig('scripts/build.py')?.command).toBe('python scripts/build.py')
+    expect(currentFileConfig('scripts/build.py')?.command).toBe(`${python} scripts/build.py`)
     expect(currentFileConfig('my tools/run.js')?.command).toBe('node "my tools/run.js"')
     expect(currentFileConfig('Program.cs')?.command).toBe('dotnet run Program.cs')
     expect(currentFileConfig('README.md')).toBeNull()

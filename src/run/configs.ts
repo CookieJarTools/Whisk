@@ -1,4 +1,5 @@
 import { baseName } from '../lib/paths'
+import { isWindows, python } from '../lib/platform'
 
 /**
  * Run configurations: what ▶ runs. Whisk finds the usual ones in a project
@@ -115,10 +116,10 @@ export async function detectConfigs(files: string[], read: Read): Promise<RunCon
     configs.push({ id: 'go:run', name: 'go run .', command: 'go run .', debug: { type: 'go', program: '.' }, source: 'detected' })
   }
   if (set.has('manage.py')) {
-    configs.push({ id: 'python:django', name: 'Django server', command: 'python manage.py runserver', debug: { type: 'python', program: 'manage.py', args: ['runserver', '--noreload'] }, source: 'detected' })
+    configs.push({ id: 'python:django', name: 'Django server', command: `${python} manage.py runserver`, debug: { type: 'python', program: 'manage.py', args: ['runserver', '--noreload'] }, source: 'detected' })
   }
   for (const entry of ['main.py', 'app.py']) {
-    if (set.has(entry)) configs.push({ id: `python:${entry}`, name: `python ${entry}`, command: `python ${entry}`, debug: { type: 'python', program: entry }, source: 'detected' })
+    if (set.has(entry)) configs.push({ id: `python:${entry}`, name: `${python} ${entry}`, command: `${python} ${entry}`, debug: { type: 'python', program: entry }, source: 'detected' })
   }
   return configs
 }
@@ -150,14 +151,15 @@ export function currentFileConfig(relPath: string): RunConfig | null {
   const ext = relPath.slice(relPath.lastIndexOf('.') + 1).toLowerCase()
   const file = quote(relPath)
   const by: Record<string, Pick<RunConfig, 'command' | 'debug'>> = {
-    py: { command: `python ${file}`, debug: { type: 'python', program: relPath } },
+    py: { command: `${python} ${file}`, debug: { type: 'python', program: relPath } },
     js: { command: `node ${file}`, debug: { type: 'node', program: relPath } },
     mjs: { command: `node ${file}`, debug: { type: 'node', program: relPath } },
     cjs: { command: `node ${file}`, debug: { type: 'node', program: relPath } },
     ts: { command: `npx tsx ${file}` },
     go: { command: `go run ${file}` },
     cs: { command: `dotnet run ${file}` },
-    ps1: { command: `& ./${file}` },
+    // The terminal runs PowerShell on Windows; elsewhere it's sh or bash, which need pwsh to run it.
+    ps1: { command: isWindows ? `& ./${file}` : `pwsh -File ${file}` },
     sh: { command: `bash ${file}` },
     rb: { command: `ruby ${file}` },
     php: { command: `php ${file}` },

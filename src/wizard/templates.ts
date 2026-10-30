@@ -1,4 +1,5 @@
 import { joinPath } from '../lib/paths'
+import { python } from '../lib/platform'
 
 /**
  * Project templates for the New Project wizard. Each turns the form's answers
@@ -52,7 +53,7 @@ export interface Template {
 const DOTNET: Tool = { program: 'dotnet', label: '.NET SDK', url: 'https://dotnet.microsoft.com/download' }
 const NODE: Tool = { program: 'npm', label: 'Node.js', url: 'https://nodejs.org/en/download' }
 const CARGO: Tool = { program: 'cargo', label: 'Rust', url: 'https://rustup.rs' }
-const PYTHON: Tool = { program: 'python', label: 'Python', url: 'https://www.python.org/downloads/' }
+const PYTHON: Tool = { program: python, label: 'Python', url: 'https://www.python.org/downloads/' }
 const GO: Tool = { program: 'go', label: 'Go', url: 'https://go.dev/dl/' }
 
 const q = (path: string) => `"${path}"`
@@ -276,7 +277,7 @@ export const TEMPLATES: Template[] = [
         }
       ]
       if (a.git) steps.push({ kind: 'write', path: joinPath(dir, '.gitignore'), content: '.venv/\n__pycache__/\n*.pyc\n' })
-      if (a.options.venv) steps.push({ kind: 'run', label: 'Create virtual environment', command: 'python -m venv .venv', cwd: dir })
+      if (a.options.venv) steps.push({ kind: 'run', label: 'Create virtual environment', command: `${python} -m venv .venv`, cwd: dir })
       return steps
     },
     openFile: () => 'main.py'

@@ -226,7 +226,8 @@ export const BUILT_IN_SERVERS: ServerDef[] = [
     args: [],
     extensions: ['rb'],
     languageId: 'ruby',
-    install: 'gem install ruby-lsp',
+    // Linux's gem folder belongs to root; a user install goes in ~/.local/share/gem, which Whisk searches.
+    install: isWindows ? 'gem install ruby-lsp' : 'gem install --user-install ruby-lsp',
     needs: RUBY,
     homepage: 'https://shopify.github.io/ruby-lsp/'
   },

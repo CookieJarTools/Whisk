@@ -39,7 +39,7 @@ async function install(def: ServerDef, onDone: () => void) {
       toast(`${def.label} installed`, 'success')
       attachOpenFiles(def.key)
     } else if (code === 0) {
-      toast(`${def.label} installed, but ${def.command} isn't on PATH yet. Restart Whisk to pick it up.`)
+      toast(`${def.label} installed, but Whisk can't find ${def.command}. Check where the install put it, and that the folder is on your PATH.`)
     } else {
       toast(`Installing ${def.label} failed (exit ${code}). See the log in Settings.`, 'error')
     }

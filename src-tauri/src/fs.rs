@@ -27,7 +27,9 @@ pub fn list_dir(path: String) -> Result<Vec<DirEntry>, String> {
     let mut out: Vec<DirEntry> = entries
         .flatten()
         .filter_map(|entry| {
-            let is_dir = entry.file_type().ok()?.is_dir();
+            let file_type = entry.file_type().ok()?;
+            // A link to a folder opens like a folder.
+            let is_dir = file_type.is_dir() || (file_type.is_symlink() && entry.path().is_dir());
             let name = entry.file_name().to_string_lossy().to_string();
             if is_dir && is_ignored_dir(&name) {
                 return None;

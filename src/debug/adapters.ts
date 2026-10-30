@@ -1,6 +1,6 @@
 import { ipc } from '../lib/ipc'
-import { baseName, joinPath } from '../lib/paths'
-import { isWindows } from '../lib/platform'
+import { baseName, isAbsolute, joinPath } from '../lib/paths'
+import { isWindows, python as pythonCommand } from '../lib/platform'
 import { runCommand } from '../lib/runCommand'
 import { useSettings } from '../store/settings'
 import type { RunConfig } from '../run/configs'
@@ -50,7 +50,6 @@ export interface AdapterDef {
   bundled?: boolean
 }
 
-const isAbsolute = (p: string) => /^([A-Za-z]:[\\/]|\/)/.test(p)
 const abs = (root: string, p: string) => (isAbsolute(p) ? p : joinPath(root, p.replace(/\//g, root.includes('\\') ? '\\' : '/')))
 
 async function run(command: string, ctx: AdapterContext, failure: string): Promise<string[]> {
@@ -112,17 +111,17 @@ const python: AdapterDef = {
   label: 'debugpy',
   languages: 'Python',
   homepage: 'https://github.com/microsoft/debugpy',
-  prerequisite: { program: 'python', label: 'Python', url: 'https://www.python.org/downloads/' },
+  prerequisite: { program: pythonCommand, label: 'Python', url: 'https://www.python.org/downloads/' },
   async install() {
-    const pip = 'python -m pip install --user --upgrade debugpy'
+    const pip = `${pythonCommand} -m pip install --user --upgrade debugpy`
     if (isWindows) return pip
     // Most Linux distributions mark their Python as managed by the package manager.
     return `${pip} || ${pip} --break-system-packages || (echo "pip couldn't install debugpy. Install it with your package manager instead: python-debugpy on Arch, python3-debugpy on Debian and Ubuntu." && exit 1)`
   },
   async resolve() {
-    const exe = await ipc.which('python')
+    const exe = await ipc.which(pythonCommand)
     if (!exe) return null
-    const code = await runCommand('python -c "import debugpy"', () => {})
+    const code = await runCommand(`${pythonCommand} -c "import debugpy"`, () => {})
     return code === 0 ? { command: exe, args: ['-m', 'debugpy.adapter'] } : null
   },
   async prepare(config, ctx) {

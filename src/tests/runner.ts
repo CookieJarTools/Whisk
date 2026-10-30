@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { ipc } from '../lib/ipc'
-import { baseName, joinPath, relativePath } from '../lib/paths'
+import { baseName, isAbsolute, joinPath, relativePath } from '../lib/paths'
+import { isWindows, python } from '../lib/platform'
 import { runCommand } from '../lib/runCommand'
 import { useStore } from '../store/store'
 import { usePanel } from '../store/panel'
@@ -102,7 +103,8 @@ export async function loadTestTargets() {
   if (useStore.getState().root === root) useTests.setState({ targets })
 }
 
-const q = (s: string) => `"${s.replace(/"/g, '\\"')}"`
+/** Quotes an argument for the shell the command runs in: cmd on Windows, sh elsewhere, where double quotes would still expand $ and backticks. */
+const q = (s: string) => (isWindows ? `"${s.replace(/"/g, '\\"')}"` : `'${s.replace(/'/g, `'\\''`)}'`)
 
 interface Plan {
   command: string
@@ -154,7 +156,7 @@ export async function planRun(target: TestTarget, filter?: TestFilter): Promise<
     }
     case 'pytest': {
       const file = await tempPath(`pytest-${stamp}.xml`)
-      const parts = ['python -m pytest', `--junitxml=${q(file)}`]
+      const parts = [`${python} -m pytest`, `--junitxml=${q(file)}`]
       if (filter) parts.push(q(filter.file ? `${filter.file}::${filter.name.split('.').join('::')}` : filter.name))
       return { command: parts.join(' '), collect: async () => parseJUnit(await readReport(file)) }
     }
@@ -247,11 +249,11 @@ export async function openTest(test: TestCase) {
   if (!root) return
   const fromStack = test.stack && /(?:in |at |\()((?:[A-Za-z]:)?[^\s:()]+\.\w+):(?:line )?(\d+)/.exec(test.stack)
   if (fromStack) {
-    const path = /^[A-Za-z]:/.test(fromStack[1]) ? fromStack[1] : joinPath(root, fromStack[1])
+    const path = isAbsolute(fromStack[1]) ? fromStack[1] : joinPath(root, fromStack[1])
     if ((await ipc.pathState(path)) !== 'missing' && (await useStore.getState().openFile(path))) return revealLine(path, Number(fromStack[2]))
   }
   if (test.file && test.line) {
-    const path = /^[A-Za-z]:/.test(test.file) ? test.file : joinPath(root, test.file)
+    const path = isAbsolute(test.file) ? test.file : joinPath(root, test.file)
     if (await useStore.getState().openFile(path)) return revealLine(path, test.line)
   }
   const name = test.name.replace(/\(.*$/, '').split(' > ').pop()!.trim()

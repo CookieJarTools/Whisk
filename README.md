@@ -70,7 +70,7 @@ EOF
 <summary>It won't start, or opens to a blank window</summary>
 
 - AppImages need FUSE 2: `sudo pacman -S fuse2` on Arch, `sudo apt install libfuse2t64` on Ubuntu.
-- Some NVIDIA drivers can't draw the window. Start Whisk with `WEBKIT_DISABLE_DMABUF_RENDERER=1 ~/Applications/Whisk.AppImage`, and put the same in front of `Exec=` if you use the launcher entry above.
+- With NVIDIA's driver, Whisk already turns off the drawing mode that leaves the window blank. If it's still blank on other graphics, start Whisk with `WEBKIT_DISABLE_DMABUF_RENDERER=1 ~/Applications/Whisk.AppImage`, and put the same in front of `Exec=` if you use the launcher entry above.
 
 </details>
 

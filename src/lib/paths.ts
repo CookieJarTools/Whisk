@@ -1,3 +1,6 @@
+/** `C:\Dev`, `C:/Dev` and `/home/me` are absolute; `src/main.rs` isn't. */
+export const isAbsolute = (p: string) => /^([A-Za-z]:[\\/]|\/)/.test(p)
+
 export function baseName(path: string): string {
   const parts = path.split(/[\\/]/)
   return parts[parts.length - 1] || path
